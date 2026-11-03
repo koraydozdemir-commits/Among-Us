@@ -348,7 +348,7 @@ var HALLS=[
  [[465,425],[535,425],[535,510],[465,510]],
  [[370,600],[485,600],[485,670],[370,670]]
 ];
-var ST=[[150,400],[300,205],[565,345],[565,565],[985,500],[1170,660]];
+var ST=[[150,400],[300,205],[565,345],[565,565],[1045,520],[1170,660]];
 var TBL=[820,205];
 var TASK_NAMES=['REACTOR','UPPER ENGINE','MEDBAY','ELECTRICAL','ADMIN','SHIELDS'];
 var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
@@ -984,15 +984,14 @@ function propBox(x,y,w,h,base,light){
  cx.fillStyle='rgba(255,255,255,.18)';cx.beginPath();cx.roundRect(x+5,y+4,Math.max(3,w-10),3,2);cx.fill();
  cx.restore();
 }
-function drawTable(x,y,rx,ry){
+function drawTable(x,y,rx,ry,emergency){
  cx.save();
  cx.fillStyle='rgba(0,0,0,.25)';cx.beginPath();cx.ellipse(x+2,y+5,rx+3,ry+3,0,0,Math.PI*2);cx.fill();
  cx.fillStyle='#6d7774';cx.beginPath();cx.ellipse(x,y+3,rx*.56,ry*.55,0,0,Math.PI*2);cx.fill();
  var g=cx.createLinearGradient(x-rx,y-ry,x+rx,y+ry);g.addColorStop(0,'#e3e0d5');g.addColorStop(.55,'#b7b7ad');g.addColorStop(1,'#858d89');
  cx.fillStyle=g;cx.beginPath();cx.ellipse(x,y,rx,ry,0,0,Math.PI*2);cx.fill();
  cx.fillStyle='rgba(255,255,255,.24)';cx.beginPath();cx.ellipse(x-rx*.2,y-ry*.28,rx*.48,ry*.22,-.18,0,Math.PI*2);cx.fill();
- cx.fillStyle='#d94d4d';cx.beginPath();cx.arc(x,y,Math.min(rx,ry)*.24,0,Math.PI*2);cx.fill();
- cx.fillStyle='#f4c8a7';cx.beginPath();cx.arc(x,y,Math.min(rx,ry)*.11,0,Math.PI*2);cx.fill();
+ if(emergency){cx.fillStyle='#d94d4d';cx.beginPath();cx.arc(x,y,Math.min(rx,ry)*.24,0,Math.PI*2);cx.fill();cx.fillStyle='#f4c8a7';cx.beginPath();cx.arc(x,y,Math.min(rx,ry)*.11,0,Math.PI*2);cx.fill();}
  cx.restore();
 }
 function drawConsole(x,y,w,h,accent){
@@ -1006,7 +1005,7 @@ function drawConsole(x,y,w,h,accent){
 }
 function drawFurniture(){
  // Cafeteria: five circular tables, with the emergency button on the centre one.
- [[741,127],[899,127],[820,205],[741,283],[899,283]].forEach(function(p,i){drawTable(p[0],p[1],i===2?34:28,i===2?22:19)});
+ [[741,127],[899,127],[741,283],[899,283]].forEach(function(p){drawTable(p[0],p[1],28,19,false)});
  // Engines: large rounded machinery housings and illuminated turbine cores.
  [[250,150],[300,555]].forEach(function(p){
   propBox(p[0],p[1],65,48,'#52666a','#91a2a0');
@@ -1065,7 +1064,7 @@ function drawSkeld(){
  // Task interaction markers are small glowing station lamps, not floating labels.
  ST.forEach(function(v,i){var mine=C.tasks.indexOf(i)>-1,dn=C.mine[i],pulse=.5+.5*Math.sin(Date.now()*.004+i);cx.save();cx.shadowColor=mine?(dn?'#4ade80':'#ffd166'):'#5e8b9b';cx.shadowBlur=mine?12+6*pulse:4;cx.fillStyle=mine?(dn?'#1e684b':'#9b6d24'):'#29434a';cx.strokeStyle=mine?(dn?'#72f2a2':'#ffe29a'):'#b4c8c0';cx.lineWidth=2;cx.beginPath();cx.roundRect(v[0]-12,v[1]-10,24,20,4);cx.fill();cx.stroke();cx.fillStyle='#eafff8';cx.font='bold 11px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(dn?'✓':(mine?'!':'•'),v[0],v[1]);cx.restore()});
  // Cafeteria emergency table
- drawTable(TBL[0],TBL[1],32,22);
+ drawTable(TBL[0],TBL[1],32,22,true);
  // Lights sabotage panels in Electrical
  PANELS.forEach(function(v){drawConsole(v[0],v[1],36,42,'#8ee7d7')});
  C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
@@ -1086,7 +1085,7 @@ function drawMinimap(){
  var ox=x+7*DPR,oy=y+7*DPR,iw=mw-14*DPR,ih=mh-14*DPR,sx=iw/W,sy=ih/H;
  cx.save();cx.beginPath();cx.roundRect(ox,oy,iw,ih,5*DPR);cx.clip();cx.fillStyle='#050a12';cx.fillRect(ox,oy,iw,ih);cx.translate(ox,oy);cx.scale(sx,sy);
  HALLS.forEach(function(p){polyPath(p);cx.fillStyle='#8f9994';cx.fill()});
- FLOORS.forEach(function(r){polyPath(r.p);cx.fillStyle='#173be7';cx.fill();cx.strokeStyle='#e4efff';cx.lineWidth=5;cx.stroke()});
+ FLOORS.forEach(function(r){polyPath(r.p);cx.fillStyle='#aeb8b1';cx.fill()});
  FLOORS.forEach(function(r){var xs=r.p.map(function(p){return p[0]}),ys=r.p.map(function(p){return p[1]});cx.fillStyle='#f2f5ff';cx.font='bold 18px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(r.n.toUpperCase(),(Math.min.apply(null,xs)+Math.max.apply(null,xs))/2,(Math.min.apply(null,ys)+Math.max.apply(null,ys))/2)});
  ST.forEach(function(v,i){if(C.tasks.indexOf(i)>-1&&!C.mine[i]){cx.fillStyle='#ffd76e';cx.beginPath();cx.arc(v[0],v[1],8,0,Math.PI*2);cx.fill()}});
  Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;cx.fillStyle=k===me?'#fff':P[k].col;cx.beginPath();cx.arc(q.x,q.y,k===me?10:7,0,Math.PI*2);cx.fill();if(k===me){cx.strokeStyle='#58f3e5';cx.lineWidth=2;cx.stroke()}});
