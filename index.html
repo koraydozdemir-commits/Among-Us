@@ -423,10 +423,10 @@ function meetUI(m){
 var keys={},joy=null,jv={x:0,y:0};
 addEventListener('keydown',function(e){keys[e.key.toLowerCase()]=1});addEventListener('keyup',function(e){keys[e.key.toLowerCase()]=0});
 var cv=$('cv'),cx=cv.getContext('2d'),sc=1;
-cv.addEventListener('pointerdown',function(e){if(joy||e.clientX>innerWidth*.6)return;joy={id:e.pointerId,x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId)});
-cv.addEventListener('pointermove',function(e){if(!joy||e.pointerId!==joy.id)return;var dx=e.clientX-joy.x,dy=e.clientY-joy.y,l=Math.hypot(dx,dy),m=Math.min(l,60);jv=l>6?{x:dx/l*m/60,y:dy/l*m/60}:{x:0,y:0};joy.cx=e.clientX;joy.cy=e.clientY});
+document.addEventListener('pointerdown',function(e){if((C.phase!=='play'&&C.phase!=='lobby')||joy||e.clientX>innerWidth*.6||(e.target.closest&&e.target.closest('button,input,select')))return;joy={id:e.pointerId,x:e.clientX,y:e.clientY}});
+document.addEventListener('pointermove',function(e){if(!joy||e.pointerId!==joy.id)return;var dx=e.clientX-joy.x,dy=e.clientY-joy.y,l=Math.hypot(dx,dy),m=Math.min(l,60);jv=l>6?{x:dx/l*m/60,y:dy/l*m/60}:{x:0,y:0};joy.cx=e.clientX;joy.cy=e.clientY});
 function jend(e){if(joy&&e.pointerId===joy.id){joy=null;jv={x:0,y:0}}}
-cv.addEventListener('pointerup',jend);cv.addEventListener('pointercancel',jend);
+document.addEventListener('pointerup',jend);document.addEventListener('pointercancel',jend);
 var holdT=0,holdId=-1;
 function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew')return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i];if(!C.mine[s]&&Math.hypot(p.x-ST[s][0],p.y-ST[s][1])<80)return s}return-1}
 $('use').addEventListener('pointerdown',function(e){e.preventDefault();var p=C.pos[me];if(!p||(!p.al&&C.role!=='crew'))return;var t=nearTask();
