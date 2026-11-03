@@ -319,7 +319,7 @@ canvas{image-rendering:auto}
 (function(){'use strict';
 var $=function(i){return document.getElementById(i)};
 var COL=['#ef4444','#3b82f6','#22c55e','#eab308','#ec4899','#f97316','#a855f7','#14b8a6','#e5e7eb','#84cc16'];
-var W=1440,H=870,SPD=185,R=10,KR=90,KCD=12000;
+var W=1440,H=870,SPD=185,R=12,KR=90,KCD=12000;
 // The Skeld is built in one fixed 1440 × 870 world coordinate space.
 // Room and corridor polygons are traced to the supplied full-map reference.
 var MAPDATA=window.JohnnySkeldMapData;
@@ -328,7 +328,7 @@ var FLOORS=MAPDATA.FLOORS,HALLS=MAPDATA.HALLS,ST=MAPDATA.ST,
  POWER_TARGETS=MAPDATA.POWER_TARGETS,POWER_TARGET_NAMES=MAPDATA.POWER_TARGET_NAMES,
  TBL=MAPDATA.TBL,TASK_NAMES=MAPDATA.TASK_NAMES,VENTS=MAPDATA.VENTS,
  VENT_LINKS=MAPDATA.VENT_LINKS,PANELS=MAPDATA.PANELS,BLOCKERS=MAPDATA.BLOCKERS,
- WIRE_STATIONS=MAPDATA.WIRE_STATIONS,CAMERAS=MAPDATA.CAMERAS;
+ WIRE_STATIONS=MAPDATA.WIRE_STATIONS,DOWNLOAD_STATIONS=MAPDATA.DOWNLOAD_STATIONS,CAMERAS=MAPDATA.CAMERAS;
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /* Supabase Realtime transport. The host remains authoritative; room traffic is
@@ -662,8 +662,8 @@ function handle(id,m){
  }
  else if(m.t==='sab'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.scd&&!HS.sabotage){
   var type=['lights','reactor','o2','comms','doors'].indexOf(m.type)>-1?m.type:'lights';
-  var duration=(type==='reactor'||type==='o2')?35000:(type==='doors'?12000:3600000);
-  var doorSet=type==='doors'?[1,5,8,10].sort(function(){return Math.random()-.5}).slice(0,2):[];
+  var duration=(type==='reactor'||type==='o2')?35000:(type==='doors'?10000:3600000);
+  var doorSet=type==='doors'?[0,2,3,4,5,6,13,14,15].sort(function(){return Math.random()-.5}).slice(0,2):[];
   HS.sabotage={type:type,until:Date.now()+duration,repairs:{},code:type==='o2'?String(Math.floor(10000+Math.random()*90000)):null,target:type==='comms'?Math.floor(25+Math.random()*50):null,doors:doorSet};
   HS.sabotageUntil=HS.sabotage.until;p.scd=Date.now()+28000;
   bcast({t:'sabotage',type:type,until:HS.sabotage.until,code:HS.sabotage.code,target:HS.sabotage.target,doors:doorSet});
@@ -688,20 +688,34 @@ function handle(id,m){
 function d(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function randomWireRoute(){
  var byName={};WIRE_STATIONS.forEach(function(s){byName[s.name]=s});
+ // Skeld-specific constraints: Electrical is first-only, Security last-only,
+ // Storage may be first/second, and Cafeteria is never first.
  var first=['Admin','Electrical','Navigation','Storage'];
- var second=['Admin','Cafeteria','Navigation','Storage'];
- var third=['Admin','Cafeteria','Navigation','Security'];
- var a=first[Math.random()*first.length|0];
- var b=second.filter(function(n){return n!==a})[Math.random()*second.filter(function(n){return n!==a}).length|0];
- var opts=third.filter(function(n){return n!==a&&n!==b});
- var c=opts[Math.random()*opts.length|0];
+ var a=first[Math.random()*first.length|0],b,c;
+ if(a==='Navigation'){b='Cafeteria';c='Security';}
+ else{
+  var second=['Admin','Cafeteria','Navigation','Storage'].filter(function(n){return n!==a});
+  b=second[Math.random()*second.length|0];
+  var third=['Admin','Cafeteria','Navigation','Security'].filter(function(n){return n!==a&&n!==b});
+  c=third[Math.random()*third.length|0];
+ }
  return [byName[a].point,byName[b].point,byName[c].point].map(function(p){return p.slice()});
 }
-function taskStageCount(id){return id===3?3:(id===10||id===15||id===16?2:(id===12?3:1))}
+function taskStageCount(id){
+ if(id===1)return 2;             // Upper Engine, then Lower Engine
+ if(id===3)return 3;             // Fix Wiring
+ if(id===10||id===15||id===16)return 2;
+ if(id===12)return 4;             // Storage, Upper Engine, Storage, Lower Engine
+ return 1;
+}
 function taskLocation(id,stage,actor){
- if(id===3){var route=(actor&&actor.wireRoute)||C.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;return route[Math.min(stage,route.length-1)]}
- if(id===10)return stage===0?ST[10]:[1000,555];
- if(id===12)return [ST[12],[165,205],[165,650]][Math.min(stage,2)];
+ if(id===1)return stage===0?ST[1]:[165,650];
+ if(id===3){
+  var route=(actor&&actor.wireRoute)||C.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;
+  return route[Math.min(stage,route.length-1)];
+ }
+ if(id===10)return stage===0?((actor&&actor.downloadStart)||C.downloadStart||ST[10]):[1000,555];
+ if(id===12)return [ST[12],[165,205],ST[12],[165,650]][Math.min(stage,3)];
  if(id===15)return stage===0?ST[15]:((actor&&actor.powerTarget)||C.powerTarget||POWER_TARGETS[0]);
  if(id===16)return stage===0?ST[16]:[730,740];
  return ST[id];
@@ -717,10 +731,10 @@ $('start').onclick=function(){
   var a=i/ids.length*Math.PI*2,isImp=imps.indexOf(k)>-1;
   var individual=Array.from({length:TASK_NAMES.length},function(_,n){return n}).filter(function(n){return TASK_NAMES[n]!==null&&commonTasks.indexOf(n)<0}).sort(function(){return Math.random()-.5});
   var tl=commonTasks.concat(individual.slice(0,Math.max(0,roomCfg.tasks-commonTasks.length)));
-  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],stages:{},wireRoute:HS.wireRoute,powerTarget:POWER_TARGETS[Math.random()*POWER_TARGETS.length|0],cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0};
+  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],stages:{},wireRoute:HS.wireRoute,powerTarget:POWER_TARGETS[Math.random()*POWER_TARGETS.length|0],downloadStart:DOWNLOAD_STATIONS[Math.random()*DOWNLOAD_STATIONS.length|0].point,cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0};
   if(!isImp)HS.total+=tl.length;
  });
- ids.forEach(function(k){sendTo(k,{t:'role',role:HS.p[k].role,tasks:HS.p[k].tasks,total:HS.total,P:P,cooldown:HS.cfg.cooldown,vision:HS.cfg.vision,wireRoute:HS.wireRoute,powerTarget:HS.p[k].powerTarget})});
+ ids.forEach(function(k){sendTo(k,{t:'role',role:HS.p[k].role,tasks:HS.p[k].tasks,total:HS.total,P:P,cooldown:HS.cfg.cooldown,vision:HS.cfg.vision,wireRoute:HS.wireRoute,powerTarget:HS.p[k].powerTarget,downloadStart:HS.p[k].downloadStart})});
  clearInterval(HS.t);HS.t=setInterval(tick,50);
 };
 function tick(){
@@ -748,14 +762,26 @@ function pointInPoly(x,y,poly){
  }
  return inside;
 }
+function distanceToSegment(x,y,w){
+ var dx=w[2]-w[0],dy=w[3]-w[1],t=Math.max(0,Math.min(1,((x-w[0])*dx+(y-w[1])*dy)/(dx*dx+dy*dy||1)));
+ return Math.hypot(x-(w[0]+dx*t),y-(w[1]+dy*t));
+}
 function isWalkable(x,y){
- if(x<0||y<0||x>W||y>H)return false;
+ if(x<R||y<R||x>W-R||y>H-R)return false;
  var floor=FLOORS.some(function(r){return pointInPoly(x,y,r.p)})||HALLS.some(function(poly){return pointInPoly(x,y,poly)});
  if(!floor)return false;
  if(HS&&HS.sabotage&&HS.sabotage.type==='doors'&&HS.sabotage.until>Date.now()){
-  for(var z=0;z<(HS.sabotage.doors||[]).length;z++){var door=DOORWAYS[HS.sabotage.doors[z]];if(door&&x>door[0]-4&&x<door[0]+door[2]+4&&y>door[1]-4&&y<door[1]+door[3]+4)return false}
+  for(var z=0;z<(HS.sabotage.doors||[]).length;z++){
+   var door=DOORWAYS[HS.sabotage.doors[z]];
+   if(door&&x>door[0]-4&&x<door[0]+door[2]+4&&y>door[1]-4&&y<door[1]+door[3]+4)return false;
+  }
  }
- return !BLOCKERS.some(function(b){return x>b[0]-3&&x<b[0]+b[2]+3&&y>b[1]-3&&y<b[1]+b[3]+3});
+ if(BLOCKERS.some(function(b){return x>b[0]-3&&x<b[0]+b[2]+3&&y>b[1]-3&&y<b[1]+b[3]+3}))return false;
+ // Collision uses the measured interior wall polylines, with doorway gaps
+ // cut out from those exact wall segments. This prevents walking through rooms.
+ var walls=buildMapWalls();
+ for(var i=0;i<walls.length;i++)if(distanceToSegment(x,y,walls[i])<1.25)return false;
+ return true;
 }
 function hit(p){
  var r=R*.78,pts=[[0,0],[r,0],[-r,0],[0,r],[0,-r],[r*.7,r*.7],[-r*.7,r*.7],[r*.7,-r*.7],[-r*.7,-r*.7]];
@@ -805,7 +831,7 @@ function onMsg(m){
   if(!isHost){var entered=$('jc').value.trim().toUpperCase();$('code').textContent=entered;$('quickcode').textContent=entered;$('copycode').innerHTML='COPY CODE <span>▣</span>';}
   $('lobbyMenu').hidden=true;lobbyUI()
  }
- else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
+ else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.downloadStart=m.downloadStart||ST[10];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
   killAt=Date.now()+(m.cooldown||12000);show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
   $('role').style.color=m.role==='imp'?'#fb7185':'#8fe3ff';taskUI()}
  else if(m.t==='lpos'){P=m.P}
@@ -1164,7 +1190,7 @@ setInterval(function(){
 var DPR=1;function rs(){DPR=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);sc=Math.min(innerWidth,innerHeight)/620*2.05;cx.imageSmoothingEnabled=true}
 addEventListener('resize',rs);rs();
 function body(x,y,col,dead,size){
- cx.save();cx.translate(x,dead?y:y+Math.sin(Date.now()*.006+x*.03)*1.15);var bodyScale=size||.68;cx.scale(bodyScale,bodyScale);
+ cx.save();cx.translate(x,dead?y:y+Math.sin(Date.now()*.006+x*.03)*1.15);var bodyScale=size||.78;cx.scale(bodyScale,bodyScale);
  cx.save();cx.fillStyle='rgba(0,0,0,.34)';cx.filter='blur(5px)';cx.beginPath();cx.ellipse(0,17,21,7,0,0,Math.PI*2);cx.fill();cx.restore();
  if(dead){cx.rotate(1.35);}
  cx.shadowColor='rgba(0,0,0,.5)';cx.shadowBlur=12;cx.shadowOffsetY=7;
@@ -1260,17 +1286,18 @@ function drawHallWalls(poly){
  else{cx.moveTo(minX,minY);cx.lineTo(minX,maxY);cx.moveTo(maxX,maxY);cx.lineTo(maxX,minY)}
  cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#929b96';cx.lineWidth=13;cx.stroke();cx.strokeStyle='#d0d4cd';cx.lineWidth=5;cx.stroke();cx.restore();
 }
-function drawDoor(x,y,w,h,vertical){
- cx.save();cx.shadowColor='#0008';cx.shadowBlur=5;cx.shadowBlur=0;
- cx.strokeStyle='#c0d1c8';cx.fillStyle='#8ca5a5';cx.lineWidth=3;
+function drawDoor(x,y,w,h,vertical,angle){
+ cx.save();
+ if(typeof angle==='number'){cx.translate(x,y);cx.rotate(angle);x=-w/2;y=-h/2;}
+ cx.shadowColor='#0008';cx.shadowBlur=4;cx.strokeStyle='#c0d1c8';cx.fillStyle='#8ca5a5';cx.lineWidth=2.5;
  if(vertical){
-  cx.fillRect(x,y,4,h);cx.fillRect(x+w-4,y,4,h);
+  cx.fillRect(x,y,3,h);cx.fillRect(x+w-3,y,3,h);
   cx.beginPath();cx.moveTo(x+3,y+h/2);cx.lineTo(x+w-3,y+h/2);cx.stroke();
-  cx.fillStyle='#6b8790';cx.fillRect(x+5,y+4,2,h/2-7);cx.fillRect(x+w-7,y+h/2+3,2,h/2-7);
+  cx.fillStyle='#6b8790';cx.fillRect(x+4,y+4,2,h/2-6);cx.fillRect(x+w-6,y+h/2+2,2,h/2-6);
  }else{
-  cx.fillRect(x,y,w,4);cx.fillRect(x,y+h-4,w,4);
+  cx.fillRect(x,y,w,3);cx.fillRect(x,y+h-3,w,3);
   cx.beginPath();cx.moveTo(x+w/2,y+3);cx.lineTo(x+w/2,y+h-3);cx.stroke();
-  cx.fillStyle='#6b8790';cx.fillRect(x+4,y+5,w/2-7,2);cx.fillRect(x+w/2+3,y+h-7,w/2-7,2);
+  cx.fillStyle='#6b8790';cx.fillRect(x+4,y+4,w/2-6,2);cx.fillRect(x+w/2+2,y+h-6,w/2-6,2);
  }
  cx.restore();
 }
@@ -1351,28 +1378,41 @@ function drawFurniture(){
  drawConsole(1090,610,42,24);drawConsole(1160,700,42,24);
 }
 var DOORWAYS=MAPDATA.DOORWAYS;
-var OCCLUDERS=null;
+var OCCLUDERS=null,MAP_WALL_SEGMENTS=null;
 var REACTOR_PANELS=MAPDATA.REACTOR_PANELS,O2_PANELS=MAPDATA.O2_PANELS,COMMS_PANEL=MAPDATA.COMMS_PANEL;
-function buildOccluders(){
- if(OCCLUDERS)return OCCLUDERS;
+function buildMapWalls(){
+ if(MAP_WALL_SEGMENTS)return MAP_WALL_SEGMENTS;
  var out=[];
- FLOORS.forEach(function(room){
-  var poly=room.p;
+ MAPDATA.WALLS.slice(1).forEach(function(poly){
   for(var i=0;i<poly.length;i++){
    var a=poly[i],b=poly[(i+1)%poly.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy),gaps=[];
    if(!len)continue;
    DOORWAYS.forEach(function(d){
     var px=d[0]+d[2]/2,py=d[1]+d[3]/2;
     var t=Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/(len*len)));
-    if(Math.hypot(px-(a[0]+dx*t),py-(a[1]+dy*t))<34){var half=(Math.max(d[2],d[3])/2+13)/len;gaps.push([Math.max(0,t-half),Math.min(1,t+half)])}
+    if(Math.hypot(px-(a[0]+dx*t),py-(a[1]+dy*t))<34){
+     var half=(Math.max(d[2],d[3])/2+13)/len;
+     gaps.push([Math.max(0,t-half),Math.min(1,t+half)]);
+    }
    });
-   gaps.sort(function(x,y){return x[0]-y[0]});var cursor=0,parts=[];
-   gaps.forEach(function(g){if(g[0]>cursor)parts.push([cursor,g[0]]);cursor=Math.max(cursor,g[1])});
-   if(cursor<1)parts.push([cursor,1]);
-   parts.forEach(function(q){out.push([a[0]+dx*q[0],a[1]+dy*q[0],a[0]+dx*q[1],a[1]+dy*q[1]])});
+   gaps.sort(function(x,y){return x[0]-y[0]});
+   var cursor=0;
+   gaps.forEach(function(g){
+    if(g[0]>cursor)out.push([a[0]+dx*cursor,a[1]+dy*cursor,a[0]+dx*g[0],a[1]+dy*g[0]]);
+    cursor=Math.max(cursor,g[1]);
+   });
+   if(cursor<1)out.push([a[0]+dx*cursor,a[1]+dy*cursor,b[0],b[1]]);
   }
  });
- BLOCKERS.forEach(function(b){var x=b[0],y=b[1],r=x+b[2],bt=y+b[3];out.push([x,y,r,y],[r,y,r,bt],[r,bt,x,bt],[x,bt,x,y])});
+ MAP_WALL_SEGMENTS=out;return out;
+}
+function buildOccluders(){
+ if(OCCLUDERS)return OCCLUDERS;
+ var out=buildMapWalls().slice();
+ BLOCKERS.forEach(function(b){
+  var x=b[0],y=b[1],r=x+b[2],bt=y+b[3];
+  out.push([x,y,r,y],[r,y,r,bt],[r,bt,x,bt],[x,bt,x,y]);
+ });
  OCCLUDERS=out;return out;
 }
 function raySegmentDistance(px,py,dx,dy,line){
@@ -1398,25 +1438,26 @@ function raycastVisibility(p,radius){
  return points;
 }
 function drawVision(p){
- var vision=(C.role==='imp'?310:245)*(C.vision||1);
- if(C.sabotage&&C.sabotage.type==='lights')vision=C.role==='imp'?138:72;
+ var vision=(C.role==='imp'?440:390)*(C.vision||1);
+ if(C.sabotage&&C.sabotage.type==='lights')vision=C.role==='imp'?190:135;
  var pts=raycastVisibility(p,vision),sx=sc;
- // Clip the darkness to the area OUTSIDE the visibility polygon. This keeps
- // the already-rendered map and player art intact inside the lit area.
  cx.save();cx.setTransform(1,0,0,1,0,0);cx.beginPath();cx.rect(0,0,cv.width,cv.height);
- if(pts.length){cx.moveTo((pts[0][0]-p.x)*sx+cv.width/2,(pts[0][1]-p.y)*sx+cv.height/2);
+ if(pts.length){
+  cx.moveTo((pts[0][0]-p.x)*sx+cv.width/2,(pts[0][1]-p.y)*sx+cv.height/2);
   for(var i=1;i<pts.length;i++)cx.lineTo((pts[i][0]-p.x)*sx+cv.width/2,(pts[i][1]-p.y)*sx+cv.height/2);
   cx.closePath();
  }
- cx.clip('evenodd');cx.fillStyle='rgba(1,5,12,.86)';cx.fillRect(0,0,cv.width,cv.height);cx.restore();
- // Soft falloff at the edge of the visible area.
+ cx.clip('evenodd');cx.fillStyle='rgba(1,5,12,.42)';cx.fillRect(0,0,cv.width,cv.height);cx.restore();
  cx.save();cx.setTransform(1,0,0,1,0,0);
  var g=cx.createRadialGradient(cv.width/2,cv.height/2,4,cv.width/2,cv.height/2,vision*sx);
- g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.72,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.22)');
+ g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.8,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.1)');
  cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height);cx.restore();
 }
 function drawDoors(){
- DOORWAYS.forEach(function(a){drawDoor(a[0],a[1],a[2],a[3],a[4])});
+ DOORWAYS.forEach(function(a){
+  if(typeof a[5]==='number')drawDoor(a[0]+a[2]/2,a[1]+a[3]/2,a[2],a[3],a[4],a[5]);
+  else drawDoor(a[0],a[1],a[2],a[3],a[4]);
+ });
 }
 function drawRoomWalls(){
  // Source-traced interior wall paths, rendered once to avoid the former
