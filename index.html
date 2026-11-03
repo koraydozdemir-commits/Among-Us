@@ -966,117 +966,17 @@ function floorTexture(poly,room){
  }
  cx.restore();
 }
-function drawWall(poly){
- cx.save();polyPath(poly);cx.lineJoin='round';cx.lineCap='round';
- cx.shadowColor='rgba(0,0,0,.28)';cx.shadowBlur=5;cx.shadowOffsetY=3;cx.strokeStyle='#3c494b';cx.lineWidth=25;cx.stroke();
- cx.shadowBlur=0;cx.shadowOffsetY=0;cx.strokeStyle='#87918e';cx.lineWidth=18;cx.stroke();
- cx.strokeStyle='#d0d4cd';cx.lineWidth=10;cx.stroke();cx.strokeStyle='rgba(255,255,255,.62)';cx.lineWidth=2;cx.stroke();
- cx.restore();
-}
-function drawHallWalls(poly){
- var xs=poly.map(function(p){return p[0]}),ys=poly.map(function(p){return p[1]});
- var minX=Math.min.apply(null,xs),maxX=Math.max.apply(null,xs),minY=Math.min.apply(null,ys),maxY=Math.max.apply(null,ys);
- cx.save();cx.lineCap='round';cx.lineJoin='round';cx.shadowColor='rgba(0,0,0,.22)';cx.shadowBlur=4;cx.strokeStyle='#3c494b';cx.lineWidth=21;
- cx.beginPath();
- if(maxX-minX>=maxY-minY){cx.moveTo(minX,minY);cx.lineTo(maxX,minY);cx.moveTo(maxX,maxY);cx.lineTo(minX,maxY)}
- else{cx.moveTo(minX,minY);cx.lineTo(minX,maxY);cx.moveTo(maxX,maxY);cx.lineTo(maxX,minY)}
- cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#929b96';cx.lineWidth=13;cx.stroke();cx.strokeStyle='#d0d4cd';cx.lineWidth=5;cx.stroke();cx.restore();
-}
-function drawDoor(x,y,w,h,vertical){
- cx.save();cx.shadowColor='#0008';cx.shadowBlur=5;cx.shadowBlur=0;
- cx.strokeStyle='#c0d1c8';cx.fillStyle='#8ca5a5';cx.lineWidth=3;
- if(vertical){
-  cx.fillRect(x,y,4,h);cx.fillRect(x+w-4,y,4,h);
-  cx.beginPath();cx.moveTo(x+3,y+h/2);cx.lineTo(x+w-3,y+h/2);cx.stroke();
-  cx.fillStyle='#6b8790';cx.fillRect(x+5,y+4,2,h/2-7);cx.fillRect(x+w-7,y+h/2+3,2,h/2-7);
- }else{
-  cx.fillRect(x,y,w,4);cx.fillRect(x,y+h-4,w,4);
-  cx.beginPath();cx.moveTo(x+w/2,y+3);cx.lineTo(x+w/2,y+h-3);cx.stroke();
-  cx.fillStyle='#6b8790';cx.fillRect(x+4,y+5,w/2-7,2);cx.fillRect(x+w/2+3,y+h-7,w/2-7,2);
- }
- cx.restore();
-}
-function drawConsole(x,y,w,h,accent){
- cx.save();cx.translate(x,y);cx.shadowColor='#000b';cx.shadowBlur=9;cx.shadowOffsetY=5;
- var g=cx.createLinearGradient(-w/2,-h/2,w/2,h/2);g.addColorStop(0,'#a8b9b6');g.addColorStop(.3,'#526d75');g.addColorStop(1,'#1a303a');
- cx.fillStyle=g;cx.strokeStyle='#c2d1c8';cx.lineWidth=3;cx.beginPath();cx.roundRect(-w/2,-h/2,w,h,7);cx.fill();cx.stroke();cx.shadowBlur=0;cx.fillStyle='#081b25';cx.beginPath();cx.roundRect(-w*.38,-h*.32,w*.76,h*.48,3);cx.fill();
- cx.fillStyle=accent||'#69d8d0';cx.fillRect(-w*.27,-h*.22,w*.54,3);
- for(var i=0;i<4;i++){cx.fillStyle=['#70d6ce','#82a9e8','#e8c16b','#83d29a'][i];cx.beginPath();cx.arc(-w*.25+i*w*.16,h*.26,2.5,0,7);cx.fill()}
- cx.restore();
-}
-function drawTable(x,y,rx,ry){
- cx.save();cx.shadowColor='#000b';cx.shadowBlur=10;cx.shadowOffsetY=7;cx.fillStyle='#284d5d';cx.strokeStyle='#b6c8c0';cx.lineWidth=5;cx.beginPath();cx.ellipse(x,y,rx,ry,0,0,Math.PI*2);cx.fill();cx.stroke();cx.shadowBlur=0;var g=cx.createLinearGradient(x-rx,y-ry,x+rx,y+ry);g.addColorStop(0,'#76a8b4');g.addColorStop(1,'#2d657c');cx.fillStyle=g;cx.beginPath();cx.ellipse(x,y-3,rx-8,ry-8,0,0,Math.PI*2);cx.fill();cx.strokeStyle='#a9d4d4';cx.lineWidth=2;cx.beginPath();cx.ellipse(x,y-3,rx-8,ry-8,0,0,Math.PI*2);cx.stroke();cx.restore();
-}
-function drawCrate(x,y,size){
- cx.save();cx.translate(x,y);cx.shadowColor='#000b';cx.shadowBlur=8;cx.shadowOffsetY=5;var g=cx.createLinearGradient(-size/2,-size/2,size/2,size/2);g.addColorStop(0,'#b28b5a');g.addColorStop(.5,'#765b3d');g.addColorStop(1,'#3b3b32');cx.fillStyle=g;cx.strokeStyle='#d4b47c';cx.lineWidth=3;cx.beginPath();cx.roundRect(-size/2,-size/2,size,size,5);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#493b2d';cx.lineWidth=5;cx.beginPath();cx.moveTo(-size*.36,-size*.36);cx.lineTo(size*.36,size*.36);cx.moveTo(size*.36,-size*.36);cx.lineTo(-size*.36,size*.36);cx.stroke();cx.restore();
-}
-function drawBed(x,y){
- cx.save();cx.shadowColor='#0008';cx.shadowBlur=8;cx.fillStyle='#d4ddd0';cx.strokeStyle='#50666a';cx.lineWidth=4;cx.beginPath();cx.roundRect(x-25,y-43,50,86,8);cx.fill();cx.stroke();cx.fillStyle='#75aab0';cx.beginPath();cx.roundRect(x-20,y-34,40,23,5);cx.fill();cx.fillStyle='#edf0df';cx.beginPath();cx.roundRect(x-20,y-6,40,42,4);cx.fill();cx.strokeStyle='#a4b4a9';cx.lineWidth=2;cx.stroke();cx.restore();
-}
-function drawReactor(x,y){
- cx.save();cx.shadowColor='#67dce9';cx.shadowBlur=20;cx.fillStyle='#1a3e4b';cx.strokeStyle='#9db9b8';cx.lineWidth=6;cx.beginPath();cx.roundRect(x-48,y-55,96,110,18);cx.fill();cx.stroke();cx.shadowBlur=0;
- cx.fillStyle='#39a9bd';cx.strokeStyle='#c4e8dc';cx.lineWidth=4;cx.beginPath();cx.ellipse(x,y,29,38,0,0,Math.PI*2);cx.fill();cx.stroke();
- for(var i=0;i<5;i++){cx.strokeStyle=i%2?'#b5e8dd':'#4a8290';cx.lineWidth=4;cx.beginPath();cx.moveTo(x-18+i*9,y-27);cx.lineTo(x-18+i*9,y+27);cx.stroke()}
- cx.restore();
-}
-function drawEngine(x,y){
- cx.save();cx.shadowColor='#000a';cx.shadowBlur=12;cx.fillStyle='#263c45';cx.strokeStyle='#b3c5bc';cx.lineWidth=5;cx.beginPath();cx.roundRect(x-55,y-42,110,84,13);cx.fill();cx.stroke();cx.shadowBlur=0;
- var g=cx.createRadialGradient(x,y,8,x,y,38);g.addColorStop(0,'#d4e9c4');g.addColorStop(.35,'#59c1c0');g.addColorStop(1,'#1b5162');cx.fillStyle=g;cx.beginPath();cx.arc(x,y,32,0,Math.PI*2);cx.fill();cx.strokeStyle='#c5d7c7';cx.lineWidth=4;cx.stroke();
- for(var i=0;i<8;i++){var a=i*Math.PI/4;cx.strokeStyle='#9ebbb2';cx.lineWidth=3;cx.beginPath();cx.moveTo(x+Math.cos(a)*35,y+Math.sin(a)*35);cx.lineTo(x+Math.cos(a)*48,y+Math.sin(a)*48);cx.stroke()}
- cx.restore();
-}
-function drawFurniture(){
- // Upper and lower engines
- drawEngine(295,205);drawConsole(230,265,60,30,'#e8b96c');drawEngine(295,610);drawConsole(230,660,60,30,'#e8b96c');
- // Reactor chamber and security
- drawReactor(150,395);drawConsole(205,300,48,28);drawConsole(205,475,48,28);
- drawConsole(420,330,78,34,'#7ee0d4');drawConsole(420,390,78,34,'#7ee0d4');drawConsole(420,450,78,34,'#7ee0d4');
- // MedBay beds and scanner
- drawBed(535,325);drawBed(615,325);drawConsole(580,410,82,34,'#8ce4d8');
- cx.save();cx.strokeStyle='#9fe8e0';cx.lineWidth=5;cx.shadowColor='#7cefe2';cx.shadowBlur=14;cx.beginPath();cx.ellipse(580,370,55,25,0,0,Math.PI*2);cx.stroke();cx.restore();
- // Cafeteria: five unmistakable blue round tables
- [[740,125],[890,125],[740,295],[890,295]].forEach(function(p){drawTable(p[0],p[1],43,29)});
- // Weapons cannon and O2 equipment
- cx.save();cx.translate(1140,185);cx.shadowColor='#000b';cx.shadowBlur=12;cx.fillStyle='#405a67';cx.strokeStyle='#c1d1c8';cx.lineWidth=5;cx.beginPath();cx.roundRect(-58,-38,116,76,15);cx.fill();cx.stroke();cx.fillStyle='#1a3547';cx.beginPath();cx.arc(0,0,25,0,7);cx.fill();cx.strokeStyle='#80d8df';cx.lineWidth=5;cx.beginPath();cx.arc(0,0,15,0,7);cx.stroke();cx.restore();
- drawConsole(1050,345,75,40,'#76dfce');drawConsole(1090,395,55,32);
- // Navigation cockpit
- drawConsole(1345,350,80,42,'#72e4d7');drawConsole(1390,425,68,38,'#72e4d7');drawConsole(1315,445,58,32);
- // Admin map table and terminals
- cx.save();cx.shadowColor='#000a';cx.shadowBlur=12;cx.fillStyle='#593e50';cx.strokeStyle='#c7b7ae';cx.lineWidth=5;cx.beginPath();cx.roundRect(930,455,125,85,12);cx.fill();cx.stroke();cx.shadowBlur=0;cx.fillStyle='#174d48';cx.strokeStyle='#78d6a6';cx.lineWidth=4;cx.beginPath();cx.roundRect(950,470,85,52,5);cx.fill();cx.stroke();cx.fillStyle='#8af0b8';cx.fillRect(966,485,52,4);cx.fillRect(966,495,35,3);cx.restore();
- drawConsole(920,560,58,30);drawConsole(1050,560,58,30);
- // Electrical cabinets and fuse banks
- for(var i=0;i<4;i++){drawConsole(510+i*43,500,34,54,'#e8bd62');drawConsole(510+i*43,630,34,42,'#e8bd62')}
- // Storage grid and crates
- [[710,575,48],[790,575,48],[870,575,48],[710,720,48],[870,720,48],[790,760,42]].forEach(function(p){drawCrate(p[0],p[1],p[2])});
- // Communications desk and monitor
- drawConsole(945,690,88,38,'#75e5d1');drawConsole(1030,760,60,36,'#75e5d1');
- // Shields: shield emitter ring and control stations
- cx.save();cx.strokeStyle='#70d7d8';cx.lineWidth=7;cx.shadowColor='#54dbe8';cx.shadowBlur=17;cx.beginPath();cx.arc(1170,650,47,0,Math.PI*2);cx.stroke();cx.shadowBlur=0;cx.fillStyle='#315b68';cx.beginPath();cx.arc(1170,650,25,0,Math.PI*2);cx.fill();cx.strokeStyle='#c1e7d9';cx.lineWidth=3;cx.stroke();cx.restore();drawConsole(1120,590,54,34);drawConsole(1215,700,54,34);
-}
-function drawDoors(){
- // Open doorways are deliberately inset into the thick wall frames.
- [[392,180,16,52,true],[252,365,16,50,true],[270,497,55,16,false],[392,610,16,48,true],
-  [487,370,16,48,true],[674,355,16,50,true],[1002,180,16,50,true],[1090,278,54,16,false],
-  [1132,360,16,48,true],[1272,360,16,48,true],[1272,465,16,48,true],[845,374,50,16,false],
-  [860,410,50,16,false],[490,454,50,16,false],[635,640,16,48,true],[890,770,16,48,true],
-  [1080,640,16,48,true],[930,560,16,48,true],[392,610,16,48,true]]
- .forEach(function(a){drawDoor(a[0],a[1],a[2],a[3],a[4])});
-}
 function drawSkeld(){
  cx.save();cx.fillStyle='#172126';cx.fillRect(0,0,W,H);
  // Muted steel hull rim, closer to the original game's flat overhead look.
- cx.save();cx.fillStyle='#697875';cx.strokeStyle='#c2c9c1';cx.lineWidth=18;
- cx.beginPath();cx.moveTo(55,245);cx.lineTo(150,115);cx.lineTo(280,45);cx.lineTo(625,15);cx.lineTo(960,15);cx.lineTo(1100,70);cx.lineTo(1220,180);cx.lineTo(1395,260);cx.lineTo(1435,345);cx.lineTo(1435,455);cx.lineTo(1370,555);cx.lineTo(1240,710);cx.lineTo(1190,790);cx.lineTo(1040,850);cx.lineTo(390,850);cx.lineTo(235,790);cx.lineTo(120,680);cx.lineTo(35,510);cx.lineTo(12,390);cx.closePath();cx.fill();cx.stroke();cx.restore();
+ cx.save();cx.fillStyle='#697875';
+ cx.beginPath();cx.moveTo(55,245);cx.lineTo(150,115);cx.lineTo(280,45);cx.lineTo(625,15);cx.lineTo(960,15);cx.lineTo(1100,70);cx.lineTo(1220,180);cx.lineTo(1395,260);cx.lineTo(1435,345);cx.lineTo(1435,455);cx.lineTo(1370,555);cx.lineTo(1240,710);cx.lineTo(1190,790);cx.lineTo(1040,850);cx.lineTo(390,850);cx.lineTo(235,790);cx.lineTo(120,680);cx.lineTo(35,510);cx.lineTo(12,390);cx.closePath();cx.fill();cx.restore();
  // Corridor deck, then room decks
  HALLS.forEach(function(p){var fake={c:'#71888b',kind:'hall'};floorTexture(p,fake)});
  FLOORS.forEach(function(r){floorTexture(r.p,r)});
  // Clean map edges: omit the thick outlined wall rails.
  // Leave doorways visibly open; the old decorative crossbars looked like floor grates.
- // Window strips along corridor edges
- [[420,170,190],[440,225,160],[650,350,45],[990,195,55],[1120,365,125],[710,650,170],[960,770,80]].forEach(function(a){
-  cx.fillStyle='#29444e';cx.strokeStyle='#a5c0bc';cx.lineWidth=3;cx.beginPath();cx.roundRect(a[0],a[1],a[2],14,3);cx.fill();cx.stroke();
-  for(var i=0;i<Math.floor(a[2]/18);i++){cx.fillStyle=i%2?'#4d8794':'#78aab0';cx.fillRect(a[0]+5+i*18,a[1]+3,13,8)}
- });
+ // No decorative rail, pipe, or corridor-edge outline overlays.
  drawFurniture();
  // Room vents (14) sit flush with the deck.
  VENTS.forEach(function(v){cx.save();cx.shadowColor='#9d8bf2';cx.shadowBlur=8;cx.fillStyle='#18272e';cx.strokeStyle='#b5a6e8';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-17,v[1]-10,34,20,5);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#aebcc0';cx.lineWidth=2;for(var z=-9;z<=9;z+=6){cx.beginPath();cx.moveTo(v[0]+z,v[1]-6);cx.lineTo(v[0]+z,v[1]+6);cx.stroke()}cx.restore()});
