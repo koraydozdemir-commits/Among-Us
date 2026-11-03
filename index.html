@@ -114,7 +114,7 @@ function nm(){return($('nm').value.trim()||'Crew').slice(0,10)}
 function makeCode(){var code='';for(var i=0;i<4;i++)code+=CH[Math.random()*CH.length|0];return code}
 function connectionLost(message){
  if(C.phase==='play'||C.phase==='meet'){alert(message);location.reload();return}
- resetConnection(message);
+ resetConnection(message);isHost=false;C.phase='home';show('home');
 }
 function attachHostConnection(c){
  // Register immediately on the incoming connection event. Do not wait for
@@ -197,6 +197,11 @@ $('join').onclick=function(){
  peer.on('error',function(e){
   if(!connectBusy)return;
   resetConnection((e&&e.type==='peer-unavailable'?'No room exists with that code.':'Network error ('+(e&&e.type||'unknown')+').')+' Please try again.');
+ });
+ peer.on('disconnected',function(){
+  if(!peer)return;
+  $('connectstate').textContent='Restoring room-service connection…';
+  try{peer.reconnect()}catch(e){if(connectBusy)resetConnection('Lost the room-service connection. Please try again.')}
  });
  peer.on('open',function(){
   if(!connectBusy)return;
