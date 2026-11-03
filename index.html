@@ -262,9 +262,15 @@ var PROPS=[
  {t:'plant',x:145,y:490},{t:'plant',x:1455,y:510},{t:'plant',x:800,y:945},
  {t:'pipe',x:255,y:505,a:Math.PI/2},{t:'pipe',x:1345,y:505,a:Math.PI/2},
  {t:'bench',x:600,y:300},{t:'bench',x:1000,y:700,a:Math.PI},
- {t:'cabinet',x:480,y:690},{t:'cabinet',x:1120,y:310,a:Math.PI}
+ {t:'cabinet',x:480,y:690},{t:'cabinet',x:1120,y:310,a:Math.PI},
+ {t:'console',x:280,y:410},{t:'console',x:1320,y:590},{t:'console',x:690,y:300},{t:'console',x:910,y:700},
+ {t:'crate',x:470,y:470},{t:'crate',x:1130,y:530},{t:'crate',x:720,y:760},{t:'crate',x:880,y:240},
+ {t:'plant',x:450,y:285},{t:'plant',x:1150,y:715},
+ {t:'bench',x:600,y:580},{t:'bench',x:1000,y:420},
+ {t:'cabinet',x:300,y:650},{t:'cabinet',x:1300,y:350}
 ];
-var OBSTACLES=[[555,480,42,48],[1005,470,42,48],[575,640,42,48],[985,310,42,48],[458,668,42,44],[1098,288,42,44]];
+var OBSTACLES=[[555,480,42,48],[1005,470,42,48],[575,640,42,48],[985,310,42,48],[458,668,42,44],[1098,288,42,44],
+ [450,446,42,48],[1110,506,42,48],[700,736,42,48],[860,216,42,48],[278,628,44,44],[1278,328,44,44]];
 var VENTS=[[540,180],[1060,180],[540,820],[1060,820]],PANELS=[[690,390],[910,610]];
 var ambience=Array.from({length:54},function(_,i){return{x:(i*347)%W,y:(i*613)%H,r:1+(i%3),phase:i*.73}});
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
