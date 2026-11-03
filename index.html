@@ -359,7 +359,7 @@ var ST=[[150,395],[230,265],[580,410],[570,560],[990,510],[1170,650],[1140,185],
 var TBL=[820,205];
 var TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE'];
 var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
-var PANELS=[[535,545],[620,600]];
+var PANELS=[[535,545]];
 // Furniture collision rectangles are in the same world coordinates as the map.
 var BLOCKERS=[
  [700,100,82,55],[860,100,82,55],[775,185,82,55],[700,270,82,55],[860,270,82,55],
@@ -706,7 +706,7 @@ function handle(id,m){
    if(sab.type==='o2'&&String(m.code||'')!==String(sab.code))return;
    if(sab.type==='comms'&&Math.abs(Number(m.frequency)-sab.target)>6)return;
    sab.repairs[pi]=1;
-   var complete=sab.type==='comms'?!!sab.repairs[0]:!!sab.repairs[0]&&!!sab.repairs[1];
+   var complete=(sab.type==='comms'||sab.type==='lights')?!!sab.repairs[0]:!!sab.repairs[0]&&!!sab.repairs[1];
    if(complete){HS.sabotage=null;HS.sabotageUntil=0;bcast({t:'repaired',type:sab.type})}
   }
  }
@@ -871,7 +871,7 @@ function openSabRepair(type,panel){
  }
 }
 function trySabRepair(p){
- if(!C.sabotage||C.sabotage.type==='doors'||C.sabotage.until<Date.now()||C.role!=='crew'||!p)return false;
+ if(!C.sabotage||C.sabotage.type==='doors'||C.sabotage.until<Date.now()||C.role!=='crew'||!p||!p.al)return false;
  var type=C.sabotage.type,locs=type==='lights'?PANELS:(type==='reactor'?REACTOR_PANELS:(type==='o2'?O2_PANELS:[COMMS_PANEL]));
  for(var i=0;i<locs.length;i++)if(Math.hypot(p.x-locs[i][0],p.y-locs[i][1])<94){openSabRepair(type,i);return true}
  return false;
@@ -1272,7 +1272,7 @@ function raySegmentDistance(px,py,dx,dy,line){
 }
 function raycastVisibility(p,radius){
  var source=buildOccluders(),limit=radius+28;
- var walls=source.filter(function(w){var x=Math.max(w[0],Math.min(p.x,w[2])),y=Math.max(Math.min(w[1],w[3]),Math.min(p.y,Math.max(w[1],w[3])));return Math.hypot(x-p.x,y-p.y)<limit});
+ var walls=source.filter(function(w){var x=Math.max(Math.min(w[0],w[2]),Math.min(p.x,Math.max(w[0],w[2]))),y=Math.max(Math.min(w[1],w[3]),Math.min(p.y,Math.max(w[1],w[3])));return Math.hypot(x-p.x,y-p.y)<limit});
  if(C.sabotage&&C.sabotage.type==='doors'&&C.sabotage.until>Date.now()){
   (C.sabotage.doors||[]).forEach(function(i){var d=DOORWAYS[i];if(d){var x=d[0],y=d[1],r=x+d[2],b=y+d[3];walls.push([x,y,r,y],[r,y,r,b],[r,b,x,b],[x,b,x,y])}});
  }
@@ -1288,7 +1288,7 @@ function raycastVisibility(p,radius){
 }
 function drawVision(p){
  var vision=(C.role==='imp'?310:245)*(C.vision||1);
- if(C.sabotage&&C.sabotage.type==='lights')vision=78;
+ if(C.sabotage&&C.sabotage.type==='lights')vision=C.role==='imp'?138:72;
  var pts=raycastVisibility(p,vision),sx=sc;
  cx.save();cx.setTransform(1,0,0,1,0,0);cx.globalCompositeOperation='source-over';
  cx.fillStyle='rgba(1,5,12,.86)';cx.fillRect(0,0,cv.width,cv.height);
