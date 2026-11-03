@@ -293,26 +293,57 @@ canvas{image-rendering:auto}
 var $=function(i){return document.getElementById(i)};
 var COL=['#ef4444','#3b82f6','#22c55e','#eab308','#ec4899','#f97316','#a855f7','#14b8a6','#e5e7eb','#84cc16'];
 var W=1600,H=1000,SPD=200,R=18,KR=90,KCD=12000;
-var WALLS=[[520,0,20,140],[520,260,20,140],[0,380,140,20],[260,380,260,20]];
-WALLS=WALLS.concat(WALLS.map(function(w){return[W-w[0]-w[2],H-w[1]-w[3],w[2],w[3]]}),WALLS.map(function(w){return[W-w[0]-w[2],w[1],w[2],w[3]]}),WALLS.map(function(w){return[w[0],H-w[1]-w[3],w[2],w[3]]}));
-var ST=[[200,180],[1400,180],[200,820],[1400,820],[800,120],[800,880]],TBL=[800,500];
-var TASK_NAMES=['REACTOR','ENGINE','COMMS','MEDBAY','CARGO','SHIELDS'];
-var PROPS=[
- {t:'console',x:355,y:235},{t:'console',x:1245,y:235,a:Math.PI},{t:'console',x:355,y:765},{t:'console',x:1245,y:765,a:Math.PI},
- {t:'crate',x:575,y:505},{t:'crate',x:1025,y:495},{t:'crate',x:595,y:665},{t:'crate',x:1005,y:335},
- {t:'plant',x:145,y:490},{t:'plant',x:1455,y:510},{t:'plant',x:800,y:945},
- {t:'pipe',x:255,y:505,a:Math.PI/2},{t:'pipe',x:1345,y:505,a:Math.PI/2},
- {t:'bench',x:600,y:300},{t:'bench',x:1000,y:700,a:Math.PI},
- {t:'cabinet',x:480,y:690},{t:'cabinet',x:1120,y:310,a:Math.PI},
- {t:'console',x:280,y:410},{t:'console',x:1320,y:590},{t:'console',x:690,y:300},{t:'console',x:910,y:700},
- {t:'crate',x:470,y:470},{t:'crate',x:1130,y:530},{t:'crate',x:720,y:760},{t:'crate',x:880,y:240},
- {t:'plant',x:450,y:285},{t:'plant',x:1150,y:715},
- {t:'bench',x:600,y:580},{t:'bench',x:1000,y:420},
- {t:'cabinet',x:300,y:650},{t:'cabinet',x:1300,y:350}
+// The Skeld floor plan: room rectangles and the corridors joining them.
+// Coordinates are shared by movement, task stations, props and the minimap.
+var ROOMS=[
+ {n:'Upper Engine',x:105,y:105,w:250,h:205,c:'#718b91'},
+ {n:'Reactor',x:35,y:360,w:205,h:190,c:'#7c9297'},
+ {n:'Security',x:270,y:360,w:150,h:145,c:'#718b91'},
+ {n:'Lower Engine',x:105,y:690,w:250,h:195,c:'#718b91'},
+ {n:'MedBay',x:395,y:205,w:205,h:205,c:'#849b9b'},
+ {n:'Cafeteria',x:610,y:65,w:390,h:300,c:'#a6a18c'},
+ {n:'Weapons',x:1110,y:100,w:205,h:195,c:'#819a9a'},
+ {n:'O2',x:1050,y:340,w:170,h:150,c:'#829995'},
+ {n:'Navigation',x:1370,y:355,w:195,h:190,c:'#829a9b'},
+ {n:'Admin',x:850,y:425,w:245,h:190,c:'#8b9990'},
+ {n:'Electrical',x:430,y:565,w:205,h:190,c:'#778d83'},
+ {n:'Storage',x:660,y:650,w:255,h:225,c:'#9b987f'},
+ {n:'Communications',x:970,y:755,w:190,h:145,c:'#7c918e'},
+ {n:'Shields',x:1235,y:700,w:230,h:185,c:'#81999a'}
 ];
-var OBSTACLES=[[555,480,42,48],[1005,470,42,48],[575,640,42,48],[985,310,42,48],[458,668,42,44],[1098,288,42,44],
- [450,446,42,48],[1110,506,42,48],[700,736,42,48],[860,216,42,48],[278,628,44,44],[1278,328,44,44]];
-var VENTS=[[540,180],[1060,180],[540,820],[1060,820]],PANELS=[[690,390],[910,610]];
+var CORRIDORS=[
+ [300,165,330,85],[350,250,100,90],[210,420,190,75],[300,440,110,300],
+ [335,775,105,75],[570,285,100,75],[965,245,190,85],[1135,280,85,100],
+ [1200,410,205,75],[960,540,100,145],[800,350,85,115],[700,590,95,100],
+ [885,585,95,120],[1060,610,85,170],[1150,790,105,75],[1320,770,95,75],
+ [585,705,105,80],[340,330,90,90],[420,390,95,85],[900,350,90,110]
+];
+var WALK=ROOMS.map(function(r){return[r.x,r.y,r.w,r.h]}).concat(CORRIDORS);
+var WALLS=[]; // The walkable floor union supplies solid room boundaries.
+var ST=[[145,455],[225,200],[500,300],[530,660],[965,515],[1350,790]];
+var TBL=[800,215];
+var TASK_NAMES=['REACTOR','UPPER ENGINE','MEDBAY','ELECTRICAL','ADMIN','SHIELDS'];
+var PROPS=[
+ {t:'console',x:150,y:400},{t:'console',x:170,y:505},{t:'cabinet',x:310,y:390},
+ {t:'console',x:180,y:750},{t:'cabinet',x:300,y:820},{t:'plant',x:120,y:835},
+ {t:'console',x:440,y:260},{t:'bed',x:515,y:290},{t:'console',x:550,y:360},
+ {t:'table',x:700,y:145},{t:'table',x:900,y:145},{t:'table',x:800,y:245},{t:'table',x:700,y:315},{t:'table',x:900,y:315},
+ {t:'console',x:1180,y:150},{t:'console',x:1260,y:245},{t:'crate',x:1150,y:235},
+ {t:'console',x:1090,y:390},{t:'plant',x:1180,y:450},
+ {t:'console',x:1450,y:405},{t:'console',x:1510,y:500},{t:'cabinet',x:1415,y:500},
+ {t:'console',x:900,y:470},{t:'console',x:1040,y:570},{t:'cabinet',x:890,y:580},
+ {t:'console',x:470,y:610},{t:'console',x:590,y:700},{t:'cabinet',x:470,y:720},
+ {t:'crate',x:710,y:710},{t:'crate',x:850,y:710},{t:'crate',x:710,y:820},{t:'crate',x:850,y:820},
+ {t:'console',x:1015,y:810},{t:'cabinet',x:1110,y:850},
+ {t:'console',x:1290,y:740},{t:'console',x:1400,y:820},{t:'plant',x:1450,y:740},
+ {t:'pipe',x:370,y:470,a:Math.PI/2},{t:'pipe',x:640,y:470,a:Math.PI/2},{t:'pipe',x:1000,y:650,a:Math.PI/2}
+];
+var OBSTACLES=[[125,380,50,34],[125,485,50,34],[290,380,42,42],[155,730,52,38],[285,800,42,38],
+ [420,245,45,32],[535,245,45,32],[1145,125,52,34],[1220,225,52,34],[1070,365,45,32],
+ [1420,380,50,32],[1475,470,50,32],[890,455,48,34],[1015,545,48,34],
+ [450,590,48,38],[565,675,48,38],[680,680,55,55],[820,680,55,55],[680,790,55,55],[820,790,55,55],
+ [990,785,48,34],[1080,830,48,34],[1270,715,48,34],[1380,800,48,34]];
+var VENTS=[[325,205],[455,455],[325,790],[755,600],[1115,535],[1280,770]],PANELS=[[145,455],[510,650]];
 var ambience=Array.from({length:54},function(_,i){return{x:(i*347)%W,y:(i*613)%H,r:1+(i%3),phase:i*.73}});
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
@@ -665,7 +696,7 @@ function move(p,dx,dy){
  p.x=Math.max(R,Math.min(W-R,p.x+dx));if(hit(p))p.x=Math.max(R,Math.min(W-R,p.x-dx));
  p.y=Math.max(R,Math.min(H-R,p.y+dy));if(hit(p))p.y=Math.max(R,Math.min(H-R,p.y-dy));
 }
-function hit(p){return WALLS.some(function(w){var cx=Math.max(w[0],Math.min(p.x,w[0]+w[2])),cy=Math.max(w[1],Math.min(p.y,w[1]+w[3]));return Math.hypot(p.x-cx,p.y-cy)<R})||OBSTACLES.some(function(w){var cx=Math.max(w[0],Math.min(p.x,w[0]+w[2])),cy=Math.max(w[1],Math.min(p.y,w[1]+w[3]));return Math.hypot(p.x-cx,p.y-cy)<R})}
+function hit(p){var inside=WALK.some(function(w){return p.x>=w[0]+R&&p.x<=w[0]+w[2]-R&&p.y>=w[1]+R&&p.y<=w[1]+w[3]-R});return !inside||OBSTACLES.some(function(w){var qx=Math.max(w[0],Math.min(p.x,w[0]+w[2])),qy=Math.max(w[1],Math.min(p.y,w[1]+w[3]));return Math.hypot(p.x-qx,p.y-qy)<R})}
 function startMeet(by,why){
  HS.phase='meet';HS.votes={};HS.by=by;
  bcast({t:'meet',by:by,why:why,al:Object.keys(HS.p).filter(function(k){return HS.p[k].alive}),T:25});
@@ -880,66 +911,79 @@ function drawProp(o){
  }else if(o.t==='cabinet'){cx.fillStyle='#253d53';cx.strokeStyle='#91b2c5';cx.lineWidth=3;cx.beginPath();cx.roundRect(-20,-25,40,50,6);cx.fill();cx.stroke();cx.fillStyle='#0b1b2b';cx.fillRect(-13,-17,26,15);cx.fillStyle='#6ee4df';cx.fillRect(-8,-12,16,4);cx.fillStyle='#d6b77a';cx.fillRect(12,4,3,9)}
  cx.restore();
 }
+function roundedRoom(r,mini){
+ var x=r.x,y=r.y,w=r.w,h=r.h;
+ if(mini){cx.fillStyle='#a9b9bc';cx.strokeStyle='#d7e2df';cx.lineWidth=1.5;cx.beginPath();cx.roundRect(x,y,w,h,3);cx.fill();cx.stroke();return}
+ var g=cx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,'#a9aaa0');g.addColorStop(.42,r.c);g.addColorStop(1,'#354d50');
+ cx.save();cx.shadowColor='#000b';cx.shadowBlur=22;cx.shadowOffsetY=10;cx.fillStyle='#18272d';cx.beginPath();cx.roundRect(x-5,y-5,w+10,h+10,18);cx.fill();cx.restore();
+ cx.save();cx.beginPath();cx.roundRect(x,y,w,h,14);cx.clip();cx.fillStyle=g;cx.fillRect(x,y,w,h);
+ // individual deck plates and fine seams
+ for(var px=x+12;px<x+w;px+=42){cx.strokeStyle='rgba(18,35,40,.2)';cx.lineWidth=2;cx.beginPath();cx.moveTo(px,y+5);cx.lineTo(px,y+h-5);cx.stroke()}
+ for(var py=y+14;py<y+h;py+=42){cx.strokeStyle='rgba(230,238,222,.10)';cx.lineWidth=2;cx.beginPath();cx.moveTo(x+5,py);cx.lineTo(x+w-5,py);cx.stroke()}
+ cx.restore();
+ cx.strokeStyle='#c2d0c8';cx.lineWidth=8;cx.strokeRect(x+3,y+3,w-6,h-6);
+ cx.strokeStyle='#40545a';cx.lineWidth=3;cx.strokeRect(x+10,y+10,w-20,h-20);
+ // wall-mounted lights
+ cx.fillStyle='#b8e5dc';for(var lx=x+24;lx<x+w-20;lx+=70){cx.fillRect(lx,y+3,25,4);cx.fillRect(lx,y+h-7,25,4)}
+}
+function drawSkeld(){
+ // Outer hull and the deep space around the ship
+ cx.save();cx.fillStyle='#071019';cx.fillRect(0,0,W,H);
+ var space=cx.createRadialGradient(800,470,120,800,470,980);space.addColorStop(0,'#172d37');space.addColorStop(1,'#050a11');cx.fillStyle=space;cx.fillRect(0,0,W,H);
+ cx.shadowColor='#39c5db';cx.shadowBlur=45;cx.fillStyle='#263c42';cx.strokeStyle='#90b9bb';cx.lineWidth=14;
+ cx.beginPath();cx.moveTo(90,250);cx.lineTo(230,115);cx.lineTo(535,65);cx.lineTo(1040,65);cx.lineTo(1320,115);cx.lineTo(1515,275);cx.lineTo(1570,470);cx.lineTo(1510,700);cx.lineTo(1320,875);cx.lineTo(1020,930);cx.lineTo(520,930);cx.lineTo(220,875);cx.lineTo(75,710);cx.lineTo(35,470);cx.closePath();cx.fill();cx.stroke();cx.restore();
+ // Corridor flooring first, so rooms connect seamlessly
+ CORRIDORS.forEach(function(r){var g=cx.createLinearGradient(r[0],r[1],r[0]+r[2],r[1]+r[3]);g.addColorStop(0,'#71858a');g.addColorStop(1,'#354b53');cx.fillStyle=g;cx.fillRect(r[0],r[1],r[2],r[3]);cx.strokeStyle='#aabdb9';cx.lineWidth=7;cx.strokeRect(r[0],r[1],r[2],r[3])});
+ ROOMS.forEach(function(r){roundedRoom(r,false)});
+ // Distinct room furnishings, positioned to preserve clear walking lanes
+ PROPS.forEach(function(o){
+  if(o.t==='table'){cx.save();cx.shadowColor='#0008';cx.shadowBlur=9;cx.fillStyle='#405b64';cx.strokeStyle='#b9c8c2';cx.lineWidth=5;cx.beginPath();cx.ellipse(o.x,o.y,40,27,0,0,Math.PI*2);cx.fill();cx.stroke();cx.fillStyle='#769ba0';cx.beginPath();cx.ellipse(o.x-8,o.y-7,18,8,-.2,0,7);cx.fill();cx.restore()}
+  else if(o.t==='bed'){cx.fillStyle='#b9c9c1';cx.strokeStyle='#526c70';cx.lineWidth=4;cx.beginPath();cx.roundRect(o.x-28,o.y-36,56,72,10);cx.fill();cx.stroke();cx.fillStyle='#6ba3a6';cx.fillRect(o.x-23,o.y-28,46,18);cx.fillStyle='#d7dfd2';cx.fillRect(o.x-23,o.y-5,46,34)}
+  else drawProp(o);
+ });
+ // Doors and wall partitions make the room graph readable
+ [[355,155,10,105],[355,735,10,95],[600,270,10,90],[1000,220,10,90],[1090,400,10,75],[1215,400,10,70],[850,365,10,85],[635,650,10,90],[915,720,10,90]].forEach(function(w){cx.fillStyle='#d2ded8';cx.fillRect(w[0],w[1],w[2],w[3]);cx.fillStyle='#526a70';cx.fillRect(w[0]+3,w[1]+5,w[2]-6,w[3]-10)});
+ // Labels on floor, subtle like the source game
+ cx.save();cx.textAlign='center';cx.font='900 20px Arial';cx.fillStyle='rgba(12,29,35,.58)';
+ ROOMS.forEach(function(r){cx.fillText(r.n.toUpperCase(),r.x+r.w/2,r.y+25)});cx.restore();
+ // vents
+ VENTS.forEach(function(v){cx.save();cx.shadowColor='#8b5cf6';cx.shadowBlur=12;cx.fillStyle='#18252d';cx.strokeStyle='#b4a0ef';cx.lineWidth=4;cx.beginPath();cx.roundRect(v[0]-23,v[1]-14,46,28,6);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#a9b4c9';for(var z=-12;z<=12;z+=8){cx.beginPath();cx.moveTo(v[0]+z,v[1]-8);cx.lineTo(v[0]+z,v[1]+8);cx.stroke()}cx.restore()});
+ // Task stations
+ ST.forEach(function(v,i){var mine=C.tasks.indexOf(i)>-1,dn=C.mine[i],pulse=.5+.5*Math.sin(Date.now()*.004+i);cx.save();cx.shadowColor=mine?(dn?'#22c55e':'#fbbf24'):'#53658d';cx.shadowBlur=mine?16+8*pulse:5;cx.fillStyle=mine?(dn?'#14532d':'#9a6812'):'#293e4a';cx.beginPath();cx.roundRect(v[0]-21,v[1]-19,42,38,7);cx.fill();cx.shadowBlur=0;cx.strokeStyle=mine?(dn?'#4ade80':'#fde68a'):'#a9c2c0';cx.lineWidth=2;cx.stroke();cx.fillStyle='#effffb';cx.font='bold 17px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(dn?'✓':(mine?'!':'•'),v[0],v[1]);cx.restore()});
+ // meeting table in Cafeteria
+ cx.save();cx.shadowColor='#0009';cx.shadowBlur=15;cx.fillStyle='#3d555d';cx.strokeStyle='#c2d0c8';cx.lineWidth=7;cx.beginPath();cx.ellipse(TBL[0],TBL[1],72,48,0,0,Math.PI*2);cx.fill();cx.stroke();cx.fillStyle='#7b9da1';cx.beginPath();cx.ellipse(TBL[0]-15,TBL[1]-13,27,11,-.2,0,7);cx.fill();cx.restore();
+ PANELS.forEach(function(v){cx.fillStyle='#152c42';cx.strokeStyle='#7dd3fc';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-17,v[1]-20,34,40,6);cx.fill();cx.stroke();cx.fillStyle='#4ade80';cx.fillRect(v[0]-8,v[1]-8,16,16)});
+ C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
+ if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=8;cx.shadowColor='#ff1744';cx.shadowBlur=24;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
+ Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#fff';cx.font='bold 13px Arial';cx.textAlign='center';cx.fillText(P[k].name,q.x,q.y-38)});
+}
 function drawMinimap(){
- var mw=Math.min(178,Math.max(128,innerWidth*.22))*DPR,mh=mw*.62,pad=12*DPR,x=cv.width-mw-pad,y=82*DPR;
- cx.save();cx.setTransform(1,0,0,1,0,0);cx.shadowColor='#000';cx.shadowBlur=16*DPR;cx.fillStyle='rgba(4,13,24,.88)';cx.strokeStyle='rgba(132,218,238,.8)';cx.lineWidth=1.5*DPR;cx.beginPath();cx.roundRect(x,y,mw,mh,10*DPR);cx.fill();cx.stroke();cx.shadowBlur=0;
- var ox=x+7*DPR,oy=y+7*DPR,iw=mw-14*DPR,ih=mh-14*DPR;cx.save();cx.beginPath();cx.roundRect(ox,oy,iw,ih,5*DPR);cx.clip();cx.fillStyle='#1b3044';cx.fillRect(ox,oy,iw,ih);
- cx.strokeStyle='rgba(172,211,232,.22)';cx.lineWidth=1*DPR;for(var i=1;i<8;i++){cx.beginPath();cx.moveTo(ox+iw*i/8,oy);cx.lineTo(ox+iw*i/8,oy+ih);cx.stroke()}
- WALLS.forEach(function(w){cx.fillStyle='#8ba5b7';cx.fillRect(ox+w[0]/W*iw,oy+w[1]/H*ih,Math.max(1,w[2]/W*iw),Math.max(1,w[3]/H*ih))});
- OBSTACLES.forEach(function(w){cx.fillStyle='#b18458';cx.fillRect(ox+w[0]/W*iw,oy+w[1]/H*ih,Math.max(2,w[2]/W*iw),Math.max(2,w[3]/H*ih))});
- ST.forEach(function(v,i){if(C.tasks.indexOf(i)>-1&&!C.mine[i]){cx.fillStyle='#f6c85f';cx.beginPath();cx.arc(ox+v[0]/W*iw,oy+v[1]/H*ih,2.8*DPR,0,Math.PI*2);cx.fill()}});
- Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;cx.fillStyle=k===me?'#fff':P[k].col;cx.beginPath();cx.arc(ox+q.x/W*iw,oy+q.y/H*ih,k===me?4*DPR:2.7*DPR,0,Math.PI*2);cx.fill();if(k===me){cx.strokeStyle='#64e9e0';cx.lineWidth=1.4*DPR;cx.stroke()}});
- cx.restore();cx.fillStyle='#bfeefa';cx.font='900 '+(8*DPR)+'px Arial';cx.textAlign='left';cx.fillText('SHIP MAP',x+10*DPR,y+mh-3*DPR);cx.restore();
+ var mw=Math.min(245,Math.max(190,innerWidth*.27))*DPR,mh=mw*.61,pad=12*DPR,x=cv.width-mw-pad,y=82*DPR;
+ cx.save();cx.setTransform(1,0,0,1,0,0);cx.shadowColor='#000';cx.shadowBlur=18*DPR;cx.fillStyle='rgba(4,12,20,.94)';cx.strokeStyle='rgba(167,221,226,.9)';cx.lineWidth=1.5*DPR;cx.beginPath();cx.roundRect(x,y,mw,mh,10*DPR);cx.fill();cx.stroke();cx.shadowBlur=0;
+ var ox=x+8*DPR,oy=y+8*DPR,iw=mw-16*DPR,ih=mh-16*DPR,sx=iw/W,sy=ih/H;cx.save();cx.beginPath();cx.roundRect(ox,oy,iw,ih,5*DPR);cx.clip();cx.fillStyle='#172a31';cx.fillRect(ox,oy,iw,ih);
+ cx.save();cx.translate(ox,oy);cx.scale(sx,sy);
+ // Same room and corridor geometry as the playable map
+ CORRIDORS.forEach(function(r){cx.fillStyle='#a5b4b5';cx.fillRect(r[0],r[1],r[2],r[3])});
+ ROOMS.forEach(function(r){roundedRoom(r,true)});
+ ST.forEach(function(v,i){if(C.tasks.indexOf(i)>-1&&!C.mine[i]){cx.fillStyle='#ffd66f';cx.beginPath();cx.arc(v[0],v[1],9,0,Math.PI*2);cx.fill()}});
+ Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;cx.fillStyle=k===me?'#fff':P[k].col;cx.beginPath();cx.arc(q.x,q.y,k===me?13:9,0,Math.PI*2);cx.fill();if(k===me){cx.strokeStyle='#56f1e3';cx.lineWidth=4;cx.stroke()}});
+ cx.restore();cx.restore();cx.fillStyle='#c7f5f1';cx.font='900 '+(9*DPR)+'px Arial';cx.textAlign='left';cx.fillText('THE SKELD',x+10*DPR,y+mh-3*DPR);cx.restore();
 }
 function frame(){
  requestAnimationFrame(frame);
- if(C.phase==='home'){cx.fillStyle='#07070f';cx.fillRect(0,0,cv.width,cv.height);return}
+ if(C.phase==='home'){cx.setTransform(1,0,0,1,0,0);cx.fillStyle='#07070f';cx.fillRect(0,0,cv.width,cv.height);return}
  if(C.phase==='lobby'){drawDropship();return}
- var p=C.pos[me]||{x:TBL[0],y:TBL[1],al:1};
- cx.setTransform(1,0,0,1,0,0);cx.fillStyle='#0b0c1a';cx.fillRect(0,0,cv.width,cv.height);
+ var p=C.pos[me]||{x:800,y:215,al:1};
+ cx.setTransform(1,0,0,1,0,0);cx.fillStyle='#071019';cx.fillRect(0,0,cv.width,cv.height);
  cx.setTransform(sc,0,0,sc,cv.width/2-p.x*sc,cv.height/2-p.y*sc);
- var floor=cx.createLinearGradient(0,0,W,H);floor.addColorStop(0,'#202945');floor.addColorStop(.5,'#151d35');floor.addColorStop(1,'#10172b');cx.fillStyle=floor;cx.fillRect(0,0,W,H);
- // soft drifting bioluminescent dust gives the ship a little depth
- var now=Date.now()*.001;ambience.forEach(function(v){var px=(v.x+Math.sin(now*.32+v.phase)*13+W)%W,py=(v.y+Math.cos(now*.24+v.phase)*10+H)%H;cx.globalAlpha=.12+.13*(.5+.5*Math.sin(now*1.8+v.phase));cx.fillStyle='#9bdcff';cx.beginPath();cx.arc(px,py,v.r,0,Math.PI*2);cx.fill()});cx.globalAlpha=1;
- // deck plating
- cx.strokeStyle='rgba(111,151,201,.09)';cx.lineWidth=2;
- for(var gx=0;gx<=W;gx+=100){cx.beginPath();cx.moveTo(gx,0);cx.lineTo(gx,H);cx.stroke()}
- for(var gy=0;gy<=H;gy+=100){cx.beginPath();cx.moveTo(0,gy);cx.lineTo(W,gy);cx.stroke()}
- cx.strokeStyle='rgba(137,180,224,.18)';cx.lineWidth=3;
- for(var gx=50;gx<W;gx+=200){cx.beginPath();cx.moveTo(gx,0);cx.lineTo(gx,H);cx.stroke()}
- // compartment floor insets, glass observation windows and corridor lighting
- var rooms=[[65,65,390,250],[1145,65,390,250],[65,685,390,250],[1145,685,390,250],[610,65,380,180],[610,755,380,180]];
- rooms.forEach(function(r,i){var rg=cx.createLinearGradient(r[0],r[1],r[0]+r[2],r[1]+r[3]);rg.addColorStop(0,'rgba(111,159,207,.14)');rg.addColorStop(1,'rgba(18,35,59,.05)');cx.fillStyle=rg;cx.fillRect(r[0],r[1],r[2],r[3]);cx.strokeStyle='rgba(143,190,235,.22)';cx.lineWidth=5;cx.strokeRect(r[0]+8,r[1]+8,r[2]-16,r[3]-16);});
- cx.save();cx.shadowColor='#55b9ff';cx.shadowBlur=15;cx.strokeStyle='rgba(86,190,255,.42)';cx.lineWidth=5;[[520,145,20,110],[1060,145,20,110],[520,745,20,110],[1060,745,20,110],[700,380,200,12],[700,608,200,12]].forEach(function(w){cx.strokeRect(w[0],w[1],w[2],w[3])});cx.restore();
- // overhead light pools and illuminated corridor strips
- cx.save();[[360,330],[1240,330],[360,670],[1240,670],[800,330],[800,670]].forEach(function(v,i){var glow=cx.createRadialGradient(v[0],v[1],4,v[0],v[1],115);glow.addColorStop(0,'rgba(94,184,255,.12)');glow.addColorStop(1,'rgba(94,184,255,0)');cx.fillStyle=glow;cx.fillRect(v[0]-115,v[1]-115,230,230);cx.fillStyle='rgba(168,220,255,.32)';cx.fillRect(v[0]-27,v[1]-3,54,6)});cx.restore();
- // room labels
- cx.save();cx.font='bold 34px Arial';cx.textAlign='center';cx.fillStyle='rgba(180,210,255,.13)';
- [['REACTOR',360,170],['ENGINE',1240,170],['MEDBAY',360,820],['COMMUNICATIONS',1240,820],['CAFETERIA',800,280],['STORAGE',800,740]].forEach(function(a){cx.fillText(a[0],a[1],a[2])});cx.restore();
- // room dressing: consoles, cargo, benches, plants and exposed pipework
- PROPS.forEach(drawProp);
- // wall shadows and illuminated bulkheads
- cx.save();cx.shadowColor='rgba(0,0,0,.65)';cx.shadowBlur=18;cx.shadowOffsetY=8;cx.fillStyle='#394d70';
- WALLS.forEach(function(w){cx.fillRect(w[0],w[1],w[2],w[3])});cx.restore();
- WALLS.forEach(function(w){cx.strokeStyle='rgba(158,203,255,.28)';cx.lineWidth=2;cx.strokeRect(w[0]+2,w[1]+2,Math.max(0,w[2]-4),Math.max(0,w[3]-4))});
- cx.strokeStyle='#6c4cff';cx.lineWidth=4;cx.strokeRect(0,0,W,H);
- VENTS.forEach(function(v){cx.save();cx.shadowColor='#8b5cf6';cx.shadowBlur=18;cx.fillStyle='#20243e';cx.strokeStyle='#a78bfa';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-24,v[1]-15,48,30,8);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#c4b5fd';for(var z=-12;z<=12;z+=8){cx.beginPath();cx.moveTo(v[0]+z,v[1]-9);cx.lineTo(v[0]+z,v[1]+9);cx.stroke()}cx.restore()});
- PANELS.forEach(function(v,i){cx.save();cx.shadowColor=C.sabotageUntil>Date.now()?'#ef4444':'#38bdf8';cx.shadowBlur=18;cx.fillStyle='#152c42';cx.strokeStyle=C.sabotageUntil>Date.now()?'#fb7185':'#7dd3fc';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-19,v[1]-22,38,44,7);cx.fill();cx.stroke();cx.fillStyle=C.sabotageUntil>Date.now()?'#fb7185':'#4ade80';cx.fillRect(v[0]-9,v[1]-9,18,18);cx.restore()});
- cx.fillStyle='#5b3b2a';cx.beginPath();cx.arc(TBL[0],TBL[1],42,0,7);cx.fill();cx.fillStyle='#fff';cx.font='bold 14px Arial';cx.textAlign='center';cx.fillText('MEETING',TBL[0],TBL[1]+5);
- ST.forEach(function(s,i){var mine=C.tasks.indexOf(i)>-1,dn=C.mine[i],pulse=.5+.5*Math.sin(Date.now()*.004+s[0]*.01);cx.save();cx.shadowColor=mine?(dn?'#22c55e':'#fbbf24'):'#53658d';cx.shadowBlur=mine?18+8*pulse:8;cx.fillStyle=mine?(dn?'#14532d':'#9a6812'):'#293957';cx.beginPath();cx.roundRect(s[0]-23,s[1]-23,46,46,9);cx.fill();cx.shadowBlur=0;cx.strokeStyle=mine?(dn?'#4ade80':'#fde68a'):'#7184a8';cx.lineWidth=2;cx.stroke();cx.fillStyle=mine?'#fff':'#9fb3d5';cx.font='bold 20px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(dn?'✓':(mine?'!':'•'),s[0],s[1]);cx.restore()});
- C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
- if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=8;cx.shadowColor='#ff1744';cx.shadowBlur=24;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
- Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;
-  cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#fff';cx.font='bold 13px Arial';cx.textAlign='center';cx.fillText(P[k].name,q.x,q.y-38)});
+ drawSkeld();
  cx.setTransform(1,0,0,1,0,0);
- if(p.al){var r=(C.role==='imp'?330:240)*sc;if(C.role!=='imp')r*=Number(roomCfg.vision)||1;if(C.role!=='imp'&&C.sabotageUntil>Date.now())r*=.48;var g=cx.createRadialGradient(cv.width/2,cv.height/2,r*.45,cv.width/2,cv.height/2,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.96)');cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height)}
+ if(p.al){var r=(C.role==='imp'?430:330)*sc;if(C.role!=='imp')r*=Number(roomCfg.vision)||1;if(C.role!=='imp'&&C.sabotageUntil>Date.now())r*=.48;var g=cx.createRadialGradient(cv.width/2,cv.height/2,r*.45,cv.width/2,cv.height/2,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.94)');cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height)}
  drawMinimap();
- // buttons
- var t=nearTask(),nearT=Math.hypot(p.x-TBL[0],p.y-TBL[1])<110,u=$('use');
+ var nearT=Math.hypot(p.x-TBL[0],p.y-TBL[1])<110,u=$('use'),t=nearTask();
  u.disabled=(!p.al&&C.role!=='crew')||(t<0&&!nearT);u.textContent=t>-1?'TASK':(nearT?'MEETING':'USE');
  var nb=C.bodies.some(function(b){return Math.hypot(p.x-b.x,p.y-b.y)<110});$('rep').disabled=!p.al||!nb;
  var k=$('kill');k.style.display=C.role==='imp'?'block':'none';var vb=$('vent');vb.style.display=C.role==='imp'?'block':'none';var sb=$('sab');sb.style.display=C.role==='imp'?'block':'none';var vd=Math.max(0,Math.ceil((ventAt-Date.now())/1000)),sd=Math.max(0,Math.ceil((sabAt-Date.now())/1000));vb.textContent=vd?'VENT '+vd:'VENT';vb.disabled=!p.al||vd>0||!VENTS.some(function(v){return Math.hypot(p.x-v[0],p.y-v[1])<62});sb.textContent=sd?'SAB '+sd:'SABOTAGE';sb.disabled=!p.al||sd>0||C.sabotageUntil>Date.now();var cd=Math.max(0,Math.ceil((killAt-Date.now())/1000));k.textContent=cd>0?'KILL '+cd:'KILL';k.disabled=!p.al||cd>0;
- 
  if(C.sabotageUntil>Date.now()&&C.role!=='imp'){cx.fillStyle='rgba(0,0,0,.24)';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#fda4af';cx.font='bold 14px Arial';cx.textAlign='center';cx.fillText('LIGHTS SABOTAGED · REPAIR BOTH PANELS',cv.width/2,cv.height-28)}
  if(joy&&joy.cx!=null){cx.fillStyle='rgba(255,255,255,.12)';cx.beginPath();cx.arc(joy.x*DPR,joy.y*DPR,60*DPR,0,7);cx.fill();cx.fillStyle='rgba(255,255,255,.35)';cx.beginPath();cx.arc(joy.cx*DPR,joy.cy*DPR,24*DPR,0,7);cx.fill()}
 }
