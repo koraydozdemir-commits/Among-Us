@@ -79,7 +79,7 @@ const DOWNLOAD_STATIONS=[
  {name:'Weapons',point:[1178,225]},
  {name:'Navigation',point:[1389,384]},
  {name:'Communications',point:[990,805]},
- {name:'Electrical',point:[500,555]}
+ {name:'Electrical',point:[510,590]}
 ];
 const POWER_TARGETS=[[990,805],[970,358],[1089,710],[1367,418],[1178,225],[165,650],[357,450],[285,270]];
 const POWER_TARGET_NAMES=['COMMUNICATIONS','O2','SHIELDS','NAVIGATION','WEAPONS','LOWER ENGINE','SECURITY','UPPER ENGINE'];
@@ -99,7 +99,7 @@ const DOORWAYS=[
 ];
 const PANELS=[[546,570]];
 const REACTOR_PANELS=[[130,365],[130,485]];
-const O2_PANELS=[[1000,350],[1035,385]];
+const O2_PANELS=[[1000,350],[1010,500]];
 const COMMS_PANEL=[950,780];
 const CAMERAS=[
  {name:'Security hallway',x:405,y:455,angle:0},
