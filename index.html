@@ -662,7 +662,7 @@ function handle(id,m){
  }
  else if(m.t==='sab'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.scd&&!HS.sabotage){
   var type=['lights','reactor','o2','comms','doors'].indexOf(m.type)>-1?m.type:'lights';
-  var duration=(type==='reactor'||type==='o2')?35000:(type==='doors'?10000:3600000);
+  var duration=(type==='reactor'||type==='o2')?30000:(type==='doors'?10000:3600000);
   var doorSet=type==='doors'?[0,2,3,4,5,6,13,14,15].sort(function(){return Math.random()-.5}).slice(0,2):[];
   HS.sabotage={type:type,until:Date.now()+duration,repairs:{},code:type==='o2'?String(Math.floor(10000+Math.random()*90000)):null,target:type==='comms'?Math.floor(25+Math.random()*50):null,doors:doorSet};
   HS.sabotageUntil=HS.sabotage.until;p.scd=Date.now()+28000;
@@ -1014,7 +1014,7 @@ function alignTask(){
 }
 function taskPanelTitle(title,desc){$('tasktitle').textContent=title;$('taskdesc').textContent=desc}
 function alignEngineTask(){
- taskPanelTitle('ALIGN ENGINE OUTPUT','Drag the output marker until it sits on the centre guide.');
+ taskPanelTitle('ALIGN ENGINE OUTPUT · '+((C.stages[1]||0)+1)+'/2','Align Upper Engine first, then return to Lower Engine for the final calibration.');
  var wrap=document.createElement('div');wrap.className='engine-task';
  var track=document.createElement('div');track.className='engine-track';
  var target=document.createElement('i');target.className='engine-target';
@@ -1105,7 +1105,7 @@ function cleanFilterTask(){
  wrap.appendChild(vent);$('taskarea').appendChild(wrap);
 }
 function fuelEnginesTask(){
- taskPanelTitle('FUEL ENGINES · '+((C.stages[12]||0)+1)+'/3','Press and hold FUEL until this tank is full. Continue to the next engine.');
+ taskPanelTitle('FUEL ENGINES · '+((C.stages[12]||0)+1)+'/4','Storage → Upper Engine → Storage → Lower Engine. Hold FUEL until each tank is full.');
  var wrap=document.createElement('div');wrap.className='fuel-task';var tank=document.createElement('div');tank.className='fuel-tank';var fill=document.createElement('i');tank.appendChild(fill);
  var button=document.createElement('button');button.className='tasktile';button.textContent='HOLD TO FUEL';var amount=0,active=false;
  function pump(){if(!active)return;amount=Math.min(100,amount+1);fill.style.height=amount+'%';$('taskstatus').textContent=Math.floor(amount)+'%';if(amount>=100){active=false;finishTask()}}
@@ -1460,17 +1460,13 @@ function drawDoors(){
  });
 }
 function drawRoomWalls(){
- // Source-traced interior wall paths, rendered once to avoid the former
- // stacked decorative rails. Door leaves are drawn separately.
+ // Draw the same measured, door-cut wall segments used by collision and vision.
+ // This keeps the wall openings genuinely open and avoids stacked outline rails.
+ var walls=buildMapWalls();
  cx.save();cx.lineCap='square';cx.lineJoin='miter';
- cx.shadowColor='rgba(0,0,0,.24)';cx.shadowBlur=4;cx.shadowOffsetY=2;
- cx.strokeStyle='#263538';cx.lineWidth=10;
- MAPDATA.WALLS.slice(1).forEach(function(poly){
-  if(!poly||poly.length<2)return;
-  cx.beginPath();cx.moveTo(poly[0][0],poly[0][1]);
-  for(var i=1;i<poly.length;i++)cx.lineTo(poly[i][0],poly[i][1]);
-  cx.closePath();cx.stroke();
- });
+ cx.shadowColor='rgba(0,0,0,.22)';cx.shadowBlur=3;cx.shadowOffsetY=1;
+ cx.strokeStyle='#2c3b3b';cx.lineWidth=10;
+ walls.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke()});
  cx.restore();
 }
 function drawCamera(v){
