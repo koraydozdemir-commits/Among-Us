@@ -1375,14 +1375,16 @@ function drawVision(p){
  var vision=(C.role==='imp'?310:245)*(C.vision||1);
  if(C.sabotage&&C.sabotage.type==='lights')vision=C.role==='imp'?138:72;
  var pts=raycastVisibility(p,vision),sx=sc;
- cx.save();cx.setTransform(1,0,0,1,0,0);cx.globalCompositeOperation='source-over';
- cx.fillStyle='rgba(1,5,12,.86)';cx.fillRect(0,0,cv.width,cv.height);
- cx.globalCompositeOperation='destination-out';cx.beginPath();
+ // Clip the darkness to the area OUTSIDE the visibility polygon. This keeps
+ // the already-rendered map and player art intact inside the lit area.
+ cx.save();cx.setTransform(1,0,0,1,0,0);cx.beginPath();cx.rect(0,0,cv.width,cv.height);
  if(pts.length){cx.moveTo((pts[0][0]-p.x)*sx+cv.width/2,(pts[0][1]-p.y)*sx+cv.height/2);
   for(var i=1;i<pts.length;i++)cx.lineTo((pts[i][0]-p.x)*sx+cv.width/2,(pts[i][1]-p.y)*sx+cv.height/2);
-  cx.closePath();cx.fill();
+  cx.closePath();
  }
- cx.globalCompositeOperation='source-over';
+ cx.clip('evenodd');cx.fillStyle='rgba(1,5,12,.86)';cx.fillRect(0,0,cv.width,cv.height);cx.restore();
+ // Soft falloff at the edge of the visible area.
+ cx.save();cx.setTransform(1,0,0,1,0,0);
  var g=cx.createRadialGradient(cv.width/2,cv.height/2,4,cv.width/2,cv.height/2,vision*sx);
  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.72,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.22)');
  cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height);cx.restore();
