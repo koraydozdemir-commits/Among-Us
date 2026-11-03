@@ -897,10 +897,10 @@ setInterval(function(){
 },50);
 
 /* ---------- render ---------- */
-var DPR=1;function rs(){DPR=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);sc=Math.min(innerWidth,innerHeight)/620*DPR*1.8;cx.imageSmoothingEnabled=true}
+var DPR=1;function rs(){DPR=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);sc=Math.min(innerWidth,innerHeight)/620*2.05;cx.imageSmoothingEnabled=true}
 addEventListener('resize',rs);rs();
 function body(x,y,col,dead,size){
- cx.save();cx.translate(x,dead?y:y+Math.sin(Date.now()*.006+x*.03)*1.15);var bodyScale=size||.4;cx.scale(bodyScale,bodyScale);
+ cx.save();cx.translate(x,dead?y:y+Math.sin(Date.now()*.006+x*.03)*1.15);var bodyScale=size||.62;cx.scale(bodyScale,bodyScale);
  cx.save();cx.fillStyle='rgba(0,0,0,.34)';cx.filter='blur(5px)';cx.beginPath();cx.ellipse(0,17,21,7,0,0,Math.PI*2);cx.fill();cx.restore();
  if(dead){cx.rotate(1.35);}
  cx.shadowColor='rgba(0,0,0,.5)';cx.shadowBlur=12;cx.shadowOffsetY=7;
@@ -1053,14 +1053,42 @@ function drawFurniture(){
  // Shields: shield emitter ring and control stations
  cx.save();cx.strokeStyle='#70d7d8';cx.lineWidth=7;cx.shadowColor='#54dbe8';cx.shadowBlur=17;cx.beginPath();cx.arc(1170,650,47,0,Math.PI*2);cx.stroke();cx.shadowBlur=0;cx.fillStyle='#315b68';cx.beginPath();cx.arc(1170,650,25,0,Math.PI*2);cx.fill();cx.strokeStyle='#c1e7d9';cx.lineWidth=3;cx.stroke();cx.restore();drawConsole(1120,590,54,34);drawConsole(1215,700,54,34);
 }
+var DOORWAYS=[[392,180,16,52,true],[252,365,16,50,true],[270,497,55,16,false],[392,610,16,48,true],[487,370,16,48,true],[674,355,16,50,true],[1002,180,16,50,true],[1090,278,54,16,false],[1132,360,16,48,true],[1272,360,16,48,true],[1272,465,16,48,true],[845,374,50,16,false],[860,410,50,16,false],[490,454,50,16,false],[635,640,16,48,true],[890,770,16,48,true],[1080,640,16,48,true],[930,560,16,48,true]];
 function drawDoors(){
- // Open doorways are deliberately inset into the thick wall frames.
- [[392,180,16,52,true],[252,365,16,50,true],[270,497,55,16,false],[392,610,16,48,true],
-  [487,370,16,48,true],[674,355,16,50,true],[1002,180,16,50,true],[1090,278,54,16,false],
-  [1132,360,16,48,true],[1272,360,16,48,true],[1272,465,16,48,true],[845,374,50,16,false],
-  [860,410,50,16,false],[490,454,50,16,false],[635,640,16,48,true],[890,770,16,48,true],
-  [1080,640,16,48,true],[930,560,16,48,true],[392,610,16,48,true]]
- .forEach(function(a){drawDoor(a[0],a[1],a[2],a[3],a[4])});
+ DOORWAYS.forEach(function(a){drawDoor(a[0],a[1],a[2],a[3],a[4])});
+}
+function drawRoomWalls(){
+ // Raised room partitions. Door gaps are cut into the actual polygon edges,
+ // so corridors stay connected instead of becoming sealed boxes.
+ FLOORS.forEach(function(room){
+  var poly=room.p;
+  for(var i=0;i<poly.length;i++){
+   var a=poly[i],b=poly[(i+1)%poly.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
+   if(!len)continue;
+   var gaps=[];
+   DOORWAYS.forEach(function(d){
+    var px=d[0]+d[2]/2,py=d[1]+d[3]/2;
+    var t=Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/(len*len)));
+    var ex=a[0]+dx*t,ey=a[1]+dy*t;
+    if(Math.hypot(px-ex,py-ey)<34){
+     var half=(Math.max(d[2],d[3])/2+13)/len;
+     gaps.push([Math.max(0,t-half),Math.min(1,t+half)]);
+    }
+   });
+   gaps.sort(function(x,y){return x[0]-y[0]});
+   var cursor=0,parts=[];
+   gaps.forEach(function(g){if(g[0]>cursor)parts.push([cursor,g[0]]);cursor=Math.max(cursor,g[1])});
+   if(cursor<1)parts.push([cursor,1]);
+   parts.forEach(function(part){
+    var x1=a[0]+dx*part[0],y1=a[1]+dy*part[0],x2=a[0]+dx*part[1],y2=a[1]+dy*part[1];
+    cx.save();cx.lineCap='round';cx.shadowColor='rgba(0,0,0,.35)';cx.shadowBlur=7;cx.shadowOffsetY=4;
+    cx.strokeStyle='#273337';cx.lineWidth=24;cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);cx.stroke();
+    cx.shadowBlur=0;cx.shadowOffsetY=0;cx.strokeStyle='#657775';cx.lineWidth=17;cx.stroke();
+    cx.strokeStyle='#aebbb3';cx.lineWidth=10;cx.stroke();
+    cx.strokeStyle='rgba(238,247,235,.48)';cx.lineWidth=2;cx.stroke();cx.restore();
+   });
+  }
+ });
 }
 function drawSkeld(){
  cx.save();cx.fillStyle='#172126';cx.fillRect(0,0,W,H);
@@ -1077,7 +1105,9 @@ function drawSkeld(){
   cx.fillStyle='#29444e';cx.strokeStyle='#a5c0bc';cx.lineWidth=3;cx.beginPath();cx.roundRect(a[0],a[1],a[2],14,3);cx.fill();cx.stroke();
   for(var i=0;i<Math.floor(a[2]/18);i++){cx.fillStyle=i%2?'#4d8794':'#78aab0';cx.fillRect(a[0]+5+i*18,a[1]+3,13,8)}
  });
+ drawRoomWalls();
  drawFurniture();
+ drawDoors();
  // Room vents (14) sit flush with the deck.
  VENTS.forEach(function(v){cx.save();cx.shadowColor='#9d8bf2';cx.shadowBlur=8;cx.fillStyle='#18272e';cx.strokeStyle='#b5a6e8';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-17,v[1]-10,34,20,5);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#aebcc0';cx.lineWidth=2;for(var z=-9;z<=9;z+=6){cx.beginPath();cx.moveTo(v[0]+z,v[1]-6);cx.lineTo(v[0]+z,v[1]+6);cx.stroke()}cx.restore()});
  // Task interaction markers are small glowing station lamps, not floating labels.
@@ -1088,7 +1118,7 @@ function drawSkeld(){
  PANELS.forEach(function(v){drawConsole(v[0],v[1],36,42,'#8ee7d7')});
  C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
  if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=7;cx.shadowColor='#ff1744';cx.shadowBlur=20;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
- Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#f7ffff';cx.font='bold 12px Arial';cx.textAlign='center';cx.strokeStyle='#17262b';cx.lineWidth=3;cx.strokeText(P[k].name,q.x,q.y-23);cx.fillText(P[k].name,q.x,q.y-23)});
+ Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#f7ffff';cx.font='bold 16px Arial';cx.textAlign='center';cx.strokeStyle='#17262b';cx.lineWidth=4;cx.strokeText(P[k].name,q.x,q.y-23);cx.fillText(P[k].name,q.x,q.y-23)});
  // No foreground polygon outlines; keep the floor unobstructed.
  cx.restore();
 }
