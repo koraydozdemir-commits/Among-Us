@@ -903,7 +903,7 @@ function lobbyUI(){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 $('plist').addEventListener('click',function(e){var b=e.target.closest('[data-kick]');if(b&&isHost&&confirm('Kick this player from the lobby?'))toHost({t:'kick',id:b.getAttribute('data-kick')})});
-function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){return(C.mine[i]?'&#10003; ':'&#9675; ')+TASK_NAMES[i]}).join('<br>')}
+function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){var stage=C.stages&&C.stages[i]||0,tail=i===3?' ('+(stage+1)+'/3)':(i===10||i===15||i===16?' ('+(stage+1)+'/2)':(i===12?' ('+(stage+1)+'/3)':''));var label=i===10?(stage?'UPLOAD DATA':'DOWNLOAD DATA'):TASK_NAMES[i];return(C.mine[i]?'&#10003; ':'&#9675; ')+label+tail}).join('<br>')}
 function meetUI(m){
  show('vote');$('vt').textContent=(m.why==='body'?'Body reported by ':'Emergency meeting by ')+P[m.by].name;
  var amAlive=m.al.indexOf(me)>-1,o='';
@@ -924,7 +924,7 @@ document.addEventListener('pointermove',function(e){if(!joy||e.pointerId!==joy.i
 function jend(e){if(joy&&e.pointerId===joy.id){joy=null;jv={x:0,y:0}}}
 document.addEventListener('pointerup',jend);document.addEventListener('pointercancel',jend);
 var holdT=0,holdId=-1;
-function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew')return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i];if(!C.mine[s]&&Math.hypot(p.x-ST[s][0],p.y-ST[s][1])<80)return s}return-1}
+function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew')return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i],loc=taskLocation(s,C.stages&&C.stages[s]||0);if(!C.mine[s]&&loc&&Math.hypot(p.x-loc[0],p.y-loc[1])<80)return s}return-1}
 $('use').addEventListener('pointerdown',function(e){e.preventDefault();var p=C.pos[me];if(!p||(!p.al&&C.role!=='crew'))return;if(trySabRepair(p))return;var t=nearTask();if(t>-1)startTask(t);else if(Math.hypot(p.x-TBL[0],p.y-TBL[1])<110)toHost({t:'meet'})});
 function endHold(){holdId=-1;$('hold').style.display='none'}
 $('taskcancel').onclick=function(){closeTask()};
@@ -932,7 +932,7 @@ function closeTask(){ $('taskpanel').style.display='none'; activeTask=-1;pending
 var activeTask=-1,pendingTask=-1,taskTimer=null,taskRound=0,taskTarget=[],taskChosen=[],taskPos=0;
 var taskColors=['#ef4444','#3b82f6','#22c55e','#eab308'];
 function startTask(id){
- var p=C.pos[me];if(activeTask!==-1||pendingTask!==-1||!p||C.tasks.indexOf(id)<0||C.mine[id]||Math.hypot(p.x-ST[id][0],p.y-ST[id][1])>=78)return;
+ var p=C.pos[me],loc=taskLocation(id,C.stages&&C.stages[id]||0);if(activeTask!==-1||pendingTask!==-1||!p||C.tasks.indexOf(id)<0||C.mine[id]||!loc||Math.hypot(p.x-loc[0],p.y-loc[1])>=78)return;
  activeTask=id;$('taskpanel').style.display='flex';$('taskstatus').textContent='';$('taskarea').innerHTML='';
  $('tasktitle').textContent=TASK_NAMES[id]+' · '+['POWER ROUTING','ENGINE STABILISATION','SIGNAL CALIBRATION','SAMPLE SCAN','SUPPLY SORTING','GRID REPAIR'][id];
  switch(id){
@@ -946,12 +946,12 @@ function startTask(id){
   case 7: stabilizeSteeringTask();break;
   case 8: unlockManifoldsTask();break;
   case 9: alignTask();break;
-  case 10: uploadDataTask();break;
+  case 10: if((C.stages[10]||0)===0)downloadDataTask();else uploadDataTask();break;
   case 11: cleanFilterTask();break;
   case 12: fuelEnginesTask();break;
   case 13: chartCourseTask();break;
   case 14: cleanVentTask();break;
-  case 15: divertPowerTask();break;
+  case 15: if((C.stages[15]||0)===0)divertPowerTask();else acceptPowerTask();break;
   case 16: emptyGarbageTask();break;
   case 17: inspectSampleTask();break;
  }
@@ -1055,6 +1055,13 @@ function unlockManifoldsTask(){
  order.forEach(function(n){var b=document.createElement('button');b.className='manifold-key';b.textContent=n;b.onclick=function(){if(n===next){b.classList.add('online');b.disabled=true;next++;$('taskstatus').textContent='MANIFOLD '+(next-1)+' / 10';if(next===11)finishTask()}else{$('taskstatus').textContent='WRONG ORDER · START AGAIN';next=1;Array.from(grid.children).forEach(function(x){x.disabled=false;x.classList.remove('online')})}};grid.appendChild(b)});
  $('taskarea').appendChild(grid);
 }
+function downloadDataTask(){
+ taskPanelTitle('DOWNLOAD DATA · 1/2','Download the data packet before taking it to Admin for upload.');
+ var wrap=document.createElement('div');wrap.className='upload-task';var icon=document.createElement('div');icon.className='data-icon';icon.textContent='⇩';
+ var bar=document.createElement('div');bar.className='scan-bar';bar.innerHTML='<i></i>';var button=document.createElement('button');button.className='tasktile';button.textContent='DOWNLOAD';
+ button.onclick=function(){button.disabled=true;var t=0;taskTimer=setInterval(function(){t+=100;bar.firstChild.style.width=(t/87)+'%';if(t>=8700){clearInterval(taskTimer);taskTimer=null;icon.textContent='✓';finishTask()}},100)};
+ wrap.append(icon,bar,button);$('taskarea').appendChild(wrap);
+}
 function uploadDataTask(){
  taskPanelTitle('UPLOAD DATA','Transfer the recovered data packet to the ship network.');
  var wrap=document.createElement('div');wrap.className='upload-task';var icon=document.createElement('div');icon.className='data-icon';icon.textContent='▤';
@@ -1078,7 +1085,7 @@ function cleanFilterTask(){
  wrap.appendChild(vent);$('taskarea').appendChild(wrap);
 }
 function fuelEnginesTask(){
- taskPanelTitle('FUEL ENGINES','Press and hold FUEL until the tank is full. Releasing stops the pump.');
+ taskPanelTitle('FUEL ENGINES · '+((C.stages[12]||0)+1)+'/3','Press and hold FUEL until this tank is full. Continue to the next engine.');
  var wrap=document.createElement('div');wrap.className='fuel-task';var tank=document.createElement('div');tank.className='fuel-tank';var fill=document.createElement('i');tank.appendChild(fill);
  var button=document.createElement('button');button.className='tasktile';button.textContent='HOLD TO FUEL';var amount=0,active=false;
  function pump(){if(!active)return;amount=Math.min(100,amount+1);fill.style.height=amount+'%';$('taskstatus').textContent=Math.floor(amount)+'%';if(amount>=100){active=false;finishTask()}}
@@ -1094,6 +1101,14 @@ function chartCourseTask(){
  $('taskarea').appendChild(grid);
 }
 
+function acceptPowerTask(){
+ taskPanelTitle('ACCEPT POWER · 2/2','Power has been diverted. Flip the receiving switch to restore this room.');
+ var wrap=document.createElement('div');wrap.className='divert-task';
+ var lamp=document.createElement('div');lamp.className='scan-ring';lamp.innerHTML='<span>POWER<br>OFF</span>';
+ var button=document.createElement('button');button.className='tasktile';button.textContent='ACCEPT POWER';
+ button.onclick=function(){lamp.style.background='radial-gradient(circle,#8ff7bf,#246b58)';lamp.firstChild.innerHTML='POWER<br>ON';finishTask()};
+ wrap.append(lamp,button);$('taskarea').appendChild(wrap);
+}
 function cleanVentTask(){
  taskPanelTitle('CLEAN VENT','Remove every piece of debris from the vent housing.');
  var wrap=document.createElement('div');wrap.className='vent-clean-task';var count=7;
@@ -1112,7 +1127,7 @@ function divertPowerTask(){
  wrap.append(banks,desc,lever);$('taskarea').appendChild(wrap);
 }
 function emptyGarbageTask(){
- taskPanelTitle('EMPTY GARBAGE','Pull and hold the chute lever until all the rubbish is released.');
+ taskPanelTitle('EMPTY GARBAGE · '+((C.stages[16]||0)+1)+'/2','Pull and hold the chute lever until all the rubbish is released.');
  var wrap=document.createElement('div');wrap.className='garbage-task';
  var chute=document.createElement('div');chute.className='garbage-chute';chute.innerHTML='<span>WASTE CHUTE</span><i></i>';
  var lever=document.createElement('button');lever.className='tasktile';lever.textContent='PULL LEVER';
@@ -1405,7 +1420,7 @@ function drawSkeld(){
  // Room vents (14) sit flush with the deck.
  VENTS.forEach(function(v){cx.save();cx.shadowColor='#9d8bf2';cx.shadowBlur=8;cx.fillStyle='#18272e';cx.strokeStyle='#b5a6e8';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-17,v[1]-10,34,20,5);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#aebcc0';cx.lineWidth=2;for(var z=-9;z<=9;z+=6){cx.beginPath();cx.moveTo(v[0]+z,v[1]-6);cx.lineTo(v[0]+z,v[1]+6);cx.stroke()}cx.restore()});
  // Task interaction markers are small glowing station lamps, not floating labels.
- ST.forEach(function(v,i){var mine=C.tasks.indexOf(i)>-1,dn=C.mine[i],pulse=.5+.5*Math.sin(Date.now()*.004+i);cx.save();cx.shadowColor=mine?(dn?'#4ade80':'#ffd166'):'#5e8b9b';cx.shadowBlur=mine?12+6*pulse:4;cx.fillStyle=mine?(dn?'#1e684b':'#9b6d24'):'#29434a';cx.strokeStyle=mine?(dn?'#72f2a2':'#ffe29a'):'#b4c8c0';cx.lineWidth=2;cx.beginPath();cx.roundRect(v[0]-12,v[1]-10,24,20,4);cx.fill();cx.stroke();cx.fillStyle='#eafff8';cx.font='bold 11px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(dn?'✓':(mine?'!':'•'),v[0],v[1]);cx.restore()});
+ ST.forEach(function(v,i){var mine=C.tasks.indexOf(i)>-1,dn=C.mine[i],loc=mine&&!dn?taskLocation(i,C.stages&&C.stages[i]||0):v,pulse=.5+.5*Math.sin(Date.now()*.004+i);cx.save();cx.shadowColor=mine?(dn?'#4ade80':'#ffd166'):'#5e8b9b';cx.shadowBlur=mine?12+6*pulse:4;cx.fillStyle=mine?(dn?'#1e684b':'#9b6d24'):'#29434a';cx.strokeStyle=mine?(dn?'#72f2a2':'#ffe29a'):'#b4c8c0';cx.lineWidth=2;cx.beginPath();cx.roundRect(loc[0]-12,loc[1]-10,24,20,4);cx.fill();cx.stroke();cx.fillStyle='#eafff8';cx.font='bold 11px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(dn?'✓':(mine?'!':'•'),loc[0],loc[1]);cx.restore()});
  // Cafeteria emergency table
  drawTable(TBL[0],TBL[1],32,22);
  // Lights sabotage panels in Electrical
@@ -1430,7 +1445,7 @@ function drawMinimap(){
  HALLS.forEach(function(p){polyPath(p);cx.fillStyle='#8f9994';cx.fill()});
  FLOORS.forEach(function(r){polyPath(r.p);cx.fillStyle='#173be7';cx.fill();cx.strokeStyle='#e4efff';cx.lineWidth=5;cx.stroke()});
  FLOORS.forEach(function(r){var xs=r.p.map(function(p){return p[0]}),ys=r.p.map(function(p){return p[1]});cx.fillStyle='#f2f5ff';cx.font='bold 18px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(r.n.toUpperCase(),(Math.min.apply(null,xs)+Math.max.apply(null,xs))/2,(Math.min.apply(null,ys)+Math.max.apply(null,ys))/2)});
- ST.forEach(function(v,i){if(C.tasks.indexOf(i)>-1&&!C.mine[i]){cx.fillStyle='#ffd76e';cx.beginPath();cx.arc(v[0],v[1],8,0,Math.PI*2);cx.fill()}});
+ ST.forEach(function(v,i){if(C.tasks.indexOf(i)>-1&&!C.mine[i]){var loc=taskLocation(i,C.stages&&C.stages[i]||0);cx.fillStyle='#ffd76e';cx.beginPath();cx.arc(loc[0],loc[1],8,0,Math.PI*2);cx.fill()}});
  var self=C.pos[me];if(self){cx.fillStyle='#fff';cx.beginPath();cx.arc(self.x,self.y,10,0,Math.PI*2);cx.fill();cx.strokeStyle='#58f3e5';cx.lineWidth=2;cx.stroke()}
  cx.restore();cx.restore();cx.fillStyle='#c7f5f1';cx.font='900 '+(9*DPR)+'px Arial';cx.textAlign='left';cx.fillText('THE SKELD',x+10*DPR,y+mh-3*DPR);cx.restore();
 }
