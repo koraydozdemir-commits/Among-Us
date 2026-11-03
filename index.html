@@ -966,7 +966,7 @@ function drawHallWalls(poly){
 }
 function drawDoor(x,y,w,h,vertical){
  cx.save();cx.shadowColor='#0008';cx.shadowBlur=5;cx.shadowBlur=0;
- cx.strokeStyle='#c0d1c8';cx.lineWidth=3;
+ cx.strokeStyle='#c0d1c8';cx.fillStyle='#8ca5a5';cx.lineWidth=3;
  if(vertical){
   cx.fillRect(x,y,4,h);cx.fillRect(x+w-4,y,4,h);
   cx.beginPath();cx.moveTo(x+3,y+h/2);cx.lineTo(x+w-3,y+h/2);cx.stroke();
