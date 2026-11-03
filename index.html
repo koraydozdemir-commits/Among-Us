@@ -1070,8 +1070,7 @@ function drawSkeld(){
  // Corridor deck, then room decks
  HALLS.forEach(function(p){var fake={c:'#71888b',kind:'hall'};floorTexture(p,fake)});
  FLOORS.forEach(function(r){floorTexture(r.p,r)});
- // Heavy walls are drawn above the floors, with real doorway breaks
- HALLS.forEach(drawHallWalls);FLOORS.forEach(function(r){drawWall(r.p)});
+ // Clean map edges: omit the thick outlined wall rails.
  // Leave doorways visibly open; the old decorative crossbars looked like floor grates.
  // Window strips along corridor edges
  [[420,170,190],[440,225,160],[650,350,45],[990,195,55],[1120,365,125],[710,650,170],[960,770,80]].forEach(function(a){
@@ -1090,9 +1089,7 @@ function drawSkeld(){
  C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
  if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=7;cx.shadowColor='#ff1744';cx.shadowBlur=20;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
  Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#f7ffff';cx.font='bold 12px Arial';cx.textAlign='center';cx.strokeStyle='#17262b';cx.lineWidth=3;cx.strokeText(P[k].name,q.x,q.y-23);cx.fillText(P[k].name,q.x,q.y-23)});
- // Foreground wall pass hides crewmates behind wall edges and heavy room furniture.
- HALLS.forEach(function(p){cx.save();polyPath(p);cx.strokeStyle='#17272c';cx.lineWidth=11;cx.lineJoin='round';cx.stroke();cx.restore()});
- FLOORS.forEach(function(r){cx.save();polyPath(r.p);cx.strokeStyle='#17272c';cx.lineWidth=12;cx.lineJoin='round';cx.stroke();cx.restore()});
+ // No foreground polygon outlines; keep the floor unobstructed.
  cx.restore();
 }
 function drawVision(p){
