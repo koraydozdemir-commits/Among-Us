@@ -1124,7 +1124,7 @@ function divertPowerTask(){
  var banks=document.createElement('div');banks.className='divert-banks';
  var labels=POWER_TARGET_NAMES.slice(),desc=document.createElement('div');desc.className='engine-readout';desc.textContent='TARGET CIRCUIT · '+targetName;
  labels.forEach(function(label,i){var b=document.createElement('button');b.className='divert-bank';b.textContent=label;b.onclick=function(){if(banks.dataset.chosen)return;if(i!==chosen){$('taskstatus').textContent='INCORRECT CIRCUIT · FOLLOW THE TARGET INDICATOR';return}banks.dataset.chosen=String(i);b.classList.add('selected');desc.textContent='POWER ROUTED · '+label};banks.appendChild(b)});
- var lever=document.createElement('button');lever.className='tasktile';lever.textContent='DIVERT POWER';lever.onclick=function(){if(!banks.dataset.chosen){$('taskstatus').textContent='SELECT THE MARKED CIRCUIT FIRST';return}lever.textContent='POWER DIVERTED';lever.disabled=true};
+ var lever=document.createElement('button');lever.className='tasktile';lever.textContent='DIVERT POWER';lever.onclick=function(){if(!banks.dataset.chosen){$('taskstatus').textContent='SELECT THE MARKED CIRCUIT FIRST';return}$('taskstatus').textContent='POWER DIVERTED · TRAVEL TO '+targetName;finishTask()};
  wrap.append(banks,desc,lever);$('taskarea').appendChild(wrap);
 }
 function emptyGarbageTask(){
