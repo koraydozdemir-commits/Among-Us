@@ -262,7 +262,7 @@ function readRoomCfg(){
 }
 ['cfgImps','cfgSpeed','cfgCooldown','cfgTasks','cfgVision'].forEach(function(id){$(id).addEventListener('change',function(){readRoomCfg();if(isHost)bcast({t:'lobby',P:P,cfg:roomCfg})})});
 
-/* ---------- networking: host-authoritative PeerJS ---------- */
+/* ---------- networking: host-authoritative Supabase Realtime ---------- */
 function toHost(m){
  if(isHost)handle(me,m);
  else if(hostConn&&hostConn.open){try{hostConn.send(m)}catch(e){connectionLost('Could not send data to the host. Rejoin the room.')} }
@@ -313,7 +313,7 @@ function beginHost(code,attempt){
  $('code').textContent=code;
  $('lmsg').textContent='Connecting to room service…';
  $('lobbyconnect').textContent='Reserving room code…';
- try{peer=new Peer('vcrew-'+code,{debug:1,host:'0.peerjs.com',port:443,path:'/',secure:true})}
+ try{peer=new Peer('vcrew-'+code)}
  catch(e){if(attempt<25){beginHost(makeCode(),attempt+1);return}failHost('Could not start the room service. Please try again.');return}
  var opened=false,settled=false;
  peer.on('error',function(e){
@@ -351,7 +351,7 @@ $('copycode').onclick=function(){
 };
 $('host').onclick=function(){
  if(connectBusy)return;
- if(!window.Peer)return err('PeerJS did not load. Refresh the page and try again.');
+ if(!window.Peer)return err('Multiplayer networking did not load. Refresh the page and try again.');
  if(peer){try{peer.destroy()}catch(e){}peer=null}
  readRoomCfg();readCustom();isHost=true;me='host';conns={};hostConn=null;P={host:{name:nm(),col:playerColor,hat:playerHat,x:800,y:570}};HS=null;C.phase='lobby';$('lobbyMenu').hidden=true;
  var code=makeCode();
@@ -368,7 +368,7 @@ $('join').onclick=function(){
  if(peer){try{peer.destroy()}catch(e){}peer=null}
  isHost=false;hostConn=null;conns={};P={};me='me';
  beginConnect('Connecting to the room service…',30000,'Could not connect. Check the room code and internet connection, then try again.');
- try{peer=new Peer({debug:1,host:'0.peerjs.com',port:443,path:'/',secure:true})}
+ try{peer=new Peer()}
  catch(e){resetConnection('Could not start networking. Please try again.');return}
  peer.on('error',function(e){
   if(!connectBusy)return;
