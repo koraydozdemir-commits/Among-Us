@@ -1084,29 +1084,10 @@ function drawSkeld(){
  cx.restore();
 }
 function drawVision(p){
- // Robust player lighting: always reveal a usable circular area around the player.
- // The previous wall-ray polygon could collapse to a zero-area shape when a ray
- // started inside a blocker, leaving the entire viewport covered in darkness.
- var radius=(C.role==='imp'?430:390)*sc;
- if(C.role!=='imp')radius*=Number(roomCfg.vision)||1;
- if(C.role!=='imp'&&C.sabotageUntil>Date.now())radius*=.72;
- radius=Math.max(90*DPR,Math.min(radius,Math.max(cv.width,cv.height)*.9));
- cx.save();
- cx.setTransform(1,0,0,1,0,0);
- cx.globalCompositeOperation='source-over';
- cx.fillStyle='rgba(0,0,0,.88)';
- cx.fillRect(0,0,cv.width,cv.height);
- cx.globalCompositeOperation='destination-out';
- var gx=cv.width/2,gy=cv.height/2;
- var grad=cx.createRadialGradient(gx,gy,radius*.72,gx,gy,radius);
- grad.addColorStop(0,'rgba(0,0,0,1)');
- grad.addColorStop(.72,'rgba(0,0,0,1)');
- grad.addColorStop(1,'rgba(0,0,0,0)');
- cx.fillStyle=grad;
- cx.beginPath();
- cx.arc(gx,gy,radius,0,Math.PI*2);
- cx.fill();
- cx.restore();
+ // Full ship visibility: disable the darkness overlay until wall occlusion is
+ // implemented with a proper off-screen visibility mask.
+ // Room walls, door frames and foreground furniture still render normally.
+ return;
 }
 function drawMinimap(){
  var mw=Math.min(250,Math.max(190,innerWidth*.27))*DPR,mh=mw*.60,pad=12*DPR,x=cv.width-mw-pad,y=82*DPR;
