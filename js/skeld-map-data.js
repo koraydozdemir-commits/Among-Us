@@ -114,16 +114,16 @@ const PROPS=[
  {id:'security-desk',x:360,y:405,w:48,h:32},
  {id:'medbay-bed-a',x:492,y:325,w:42,h:72},
  {id:'medbay-bed-b',x:555,y:325,w:42,h:72},
- {id:'cafeteria-table-a',x:680,y:125,w:76,h:52},
- {id:'cafeteria-table-b',x:950,y:125,w:76,h:52},
- {id:'cafeteria-table-c',x:680,y:285,w:76,h:52},
- {id:'cafeteria-table-d',x:950,y:285,w:76,h:52},
+ {id:'cafeteria-table-a',x:740,y:125,w:76,h:52},
+ {id:'cafeteria-table-b',x:890,y:125,w:76,h:52},
+ {id:'cafeteria-table-c',x:740,y:295,w:76,h:52},
+ {id:'cafeteria-table-d',x:890,y:295,w:76,h:52},
  {id:'meeting-table',x:820,y:205,w:58,h:40},
  {id:'weapons-cannon',x:1115,y:180,w:104,h:68},
  {id:'admin-table',x:930,y:500,w:100,h:70},
  {id:'shield-generator',x:1127,y:650,w:66,h:66}
 ];
-const BLOCKERS=PROPS.map(p=>[p.x-p.w/2,p.y-p.h/2,p.w,p.h]).concat([
+const BLOCKERS=PROPS.map(p=>{const cw=p.w*0.58,ch=p.h*0.58;return[p.x-cw/2,p.y-ch/2,cw,ch]}).concat([
  [480,492,30,48],[520,492,30,48],[560,492,30,48],[600,492,30,48],
  [480,610,30,42],[520,610,30,42],[560,610,30,42],
  [660,590,42,42],[750,590,42,42],[800,590,38,38],[660,705,42,42],[800,705,38,38],[740,770,42,38],
