@@ -35,7 +35,7 @@ button.g{background:#2a2f55}button:disabled{opacity:.35}
 #aligntrack{width:min(360px,90%);height:28px;background:#101827;border:2px solid #8ca4c5;border-radius:20px;position:relative;overflow:hidden}
 #alignzone{position:absolute;left:42%;width:16%;height:100%;background:#22c55e88;border-left:2px solid #86efac;border-right:2px solid #86efac}
 #alignneedle{position:absolute;left:0;top:0;width:5px;height:100%;background:#fff;box-shadow:0 0 8px #fff}
-</style></head><body>
+<style>.settinggrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.settinggrid label{display:flex;flex-direction:column;gap:5px;color:#aabbd2;font-size:13px}.settinggrid select{width:100%;min-height:42px;padding:6px;border:1px solid #526582;border-radius:9px;background:#202e45;color:white;font:inherit}#lobby{overflow-y:auto;justify-content:flex-start;padding-top:22px;padding-bottom:22px}@media(max-width:420px){.settinggrid{grid-template-columns:1fr}#lobby{gap:10px}}</style></head><body>
 <canvas id="cv"></canvas>
 <div id="hud"><div>Role: <span id="role"></span><div id="tl" style="font-weight:400;font-size:14px;margin-top:4px"></div></div><div>Tasks<div id="bar"><i></i></div></div></div>
 <div id="hold"><i></i></div>
@@ -48,13 +48,12 @@ button.g{background:#2a2f55}button:disabled{opacity:.35}
  <div class="row"><button id="host">Host game</button></div>
  <input id="jc" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off">
  <button id="join" class="g">Join with code</button>
- <div id="err" style="color:#fb7185;min-height:22px"></div>
+ <div id="err" style="color:#fb7185;min-height:22px"></div><div id="connectstate" style="min-height:20px;color:#a9c7e8;font-size:13px"></div>
  <div style="color:#667;font-size:13px;max-width:380px">Needs internet. 3 or more players. Everyone opens the same page.</div>
 </div>
 <div class="scr" id="lobby" hidden>
  <div>Join code</div><div id="code"></div>
- <div class="pl" id="plist"></div><div id="lmsg" style="color:#9aa"></div>
- <button id="start" hidden>Start game</button>
+ <div class="pl" id="plist"></div><div id="lmsg" style="color:#9aa"></div><section id="roomsettings" style="display:none;width:min(560px,100%);padding:14px;border:1px solid #39496c;border-radius:14px;background:#111a2b;text-align:left"><h3>ROOM SETTINGS · HOST ONLY</h3><div class="settinggrid"><label>Impostors<select id="cfgImps"><option value="1">1</option><option value="2">2</option></select></label><label>Speed<select id="cfgSpeed"><option value=".8">Slow</option><option value="1" selected>Normal</option><option value="1.25">Fast</option><option value="1.5">Very fast</option></select></label><label>Kill cooldown<select id="cfgCooldown"><option value="8000">8 sec</option><option value="12000" selected>12 sec</option><option value="18000">18 sec</option><option value="25000">25 sec</option></select></label><label>Tasks per crewmate<select id="cfgTasks"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label></div></section><button id="start" hidden>Start game</button>
 </div>
 <div class="scr" id="vote" hidden><h2 id="vt" style="margin:0"></h2><div id="vopts" class="row" style="max-width:640px"></div><div id="vtime"></div></div>
 <div class="scr" id="end" hidden><h1 id="et"></h1><div id="es" style="color:#9aa"></div><button id="again" hidden>Back to lobby</button></div>
@@ -70,7 +69,8 @@ WALLS=WALLS.concat(WALLS.map(function(w){return[W-w[0]-w[2],H-w[1]-w[3],w[2],w[3
 var ST=[[200,180],[1400,180],[200,820],[1400,820],[800,120],[800,880]],TBL=[800,500];
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
-var isHost=false,peer,conns={},hostConn,me='me';
+var isHost=false,peer,conns={},hostConn,me='me',connectTimer=null,connectBusy=false;
+var roomCfg={imps:1,speed:1,cooldown:12000,tasks:3};
 var P={};            // id -> {name,col}
 var C={phase:'home',pos:{},bodies:[],done:0,total:0,role:'',tasks:[],mine:{},meet:null};
 var HS=null;         // host sim state
@@ -78,6 +78,22 @@ var inp={x:0,y:0},killAt=0;
 
 function show(id){['home','lobby','vote','end'].forEach(function(s){$(s).hidden=s!==id})}
 function err(t){$('err').textContent=t}
+function stopConnectTimer(){if(connectTimer){clearTimeout(connectTimer);connectTimer=null}}
+function resetConnection(message){
+ stopConnectTimer();connectBusy=false;
+ try{if(hostConn){hostConn.close();hostConn=null}}catch(e){}
+ try{if(peer){peer.destroy();peer=null}}catch(e){}
+ $('host').disabled=$('join').disabled=false;
+ $('connectstate').textContent='';if(message)err(message);
+}
+function beginConnect(message,ms,fail){
+ connectBusy=true;$('host').disabled=$('join').disabled=true;err('');$('connectstate').textContent=message;
+ stopConnectTimer();connectTimer=setTimeout(function(){if(connectBusy)resetConnection(fail)},ms);
+}
+function readRoomCfg(){
+ roomCfg={imps:Number($('cfgImps').value)||1,speed:Number($('cfgSpeed').value)||1,cooldown:Number($('cfgCooldown').value)||12000,tasks:Number($('cfgTasks').value)||3};
+}
+['cfgImps','cfgSpeed','cfgCooldown','cfgTasks'].forEach(function(id){$(id).addEventListener('change',function(){readRoomCfg();if(isHost)bcast({t:'lobby',P:P,cfg:roomCfg})})});
 
 /* ---------- networking ---------- */
 function toHost(m){if(isHost)handle(me,m);else if(hostConn&&hostConn.open)hostConn.send(m)}
@@ -86,31 +102,37 @@ function sendTo(id,m){if(id===me)onMsg(m);else if(conns[id]&&conns[id].open)conn
 function nm(){return($('nm').value.trim()||'Crew').slice(0,10)}
 
 $('host').onclick=function(){
+ if(connectBusy)return;
  if(!window.Peer)return err('Could not load PeerJS (network blocked?)');
- var code='';for(var i=0;i<4;i++)code+=CH[Math.random()*CH.length|0];
- err('Creating game...');
- peer=new Peer('vcrew-'+code);
- peer.on('error',function(e){err(e.type==='unavailable-id'?'Code taken, try again':'Network error: '+e.type)});
+ readRoomCfg();var code='';for(var i=0;i<4;i++)code+=CH[Math.random()*CH.length|0];
+ beginConnect('Creating room…',12000,'Room creation timed out. Check your connection and try again.');
+ try{peer=new Peer('vcrew-'+code,{debug:0});}catch(e){resetConnection('Could not start networking. Please try again.');return}
+ peer.on('error',function(e){resetConnection(e.type==='unavailable-id'?'That room code was taken. Please host again.':'Network error ('+e.type+'). Please try again.')});
  peer.on('open',function(){
+  stopConnectTimer();connectBusy=false;$('host').disabled=$('join').disabled=false;$('connectstate').textContent='';
   isHost=true;me='host';P={host:{name:nm(),col:COL[0]}};$('code').textContent=code;
-  show('lobby');lobbyUI();
+  show('lobby');lobbyUI();bcast({t:'lobby',P:P,cfg:roomCfg});
   peer.on('connection',function(c){
    c.on('data',function(m){handle(c.peer,m)});
    c.on('open',function(){conns[c.peer]=c});
-   c.on('close',function(){delete conns[c.peer];if(P[c.peer]&&C.phase==='lobby'){delete P[c.peer];bcast({t:'lobby',P:P})}});
+   c.on('close',function(){delete conns[c.peer];if(P[c.peer]&&C.phase==='lobby'){delete P[c.peer];bcast({t:'lobby',P:P,cfg:roomCfg})}});
   });
  });
 };
 $('join').onclick=function(){
+ if(connectBusy)return;
  var code=$('jc').value.trim().toUpperCase();if(code.length!==4)return err('Enter the 4 letter code');
  if(!window.Peer)return err('Could not load PeerJS (network blocked?)');
- err('Connecting...');peer=new Peer();
- peer.on('error',function(e){err(e.type==='peer-unavailable'?'No game with that code':'Network error: '+e.type)});
- peer.on('open',function(id){
-  me=id;hostConn=peer.connect('vcrew-'+code,{reliable:true});
-  hostConn.on('open',function(){hostConn.send({t:'join',name:nm()});show('lobby');$('code').textContent=code});
+ beginConnect('Connecting to PeerJS…',18000,'Connection timed out. Check the code, then try again.');
+ try{peer=new Peer({debug:0});}catch(e){resetConnection('Could not start networking. Please try again.');return}
+ peer.on('error',function(e){resetConnection((e.type==='peer-unavailable'?'No room found with that code.':'Network error ('+e.type+').')+' Please try again.')});
+ peer.on('open',function(){
+  $('connectstate').textContent='Contacting room host…';
+  try{hostConn=peer.connect('vcrew-'+code,{reliable:true});}catch(e){resetConnection('Could not contact the host. Try again.');return}
+  hostConn.on('open',function(){stopConnectTimer();connectBusy=false;$('host').disabled=$('join').disabled=false;$('connectstate').textContent='';hostConn.send({t:'join',name:nm()});show('lobby');$('code').textContent=code});
   hostConn.on('data',onMsg);
-  hostConn.on('close',function(){alert('Host left the game');location.reload()});
+  hostConn.on('error',function(){resetConnection('Connection to the room failed. Try again.')});
+  hostConn.on('close',function(){if(C.phase==='lobby'||C.phase==='home')resetConnection('The room connection closed. Check the code and try again.');else{alert('Host left the game');location.reload()}});
  });
 };
 
@@ -121,7 +143,7 @@ function handle(id,m){
   var n=Object.keys(P).length;if(n>=10)return;
   var used=Object.keys(P).map(function(k){return P[k].col});
   P[id]={name:m.name,col:COL.filter(function(c){return used.indexOf(c)<0})[0]};
-  bcast({t:'lobby',P:P});return;
+  bcast({t:'lobby',P:P,cfg:roomCfg});return;
  }
  if(!HS)return;var p=HS.p[id];if(!p)return;
  if(m.t==='in'){p.ix=m.x;p.iy=m.y}
@@ -129,7 +151,7 @@ function handle(id,m){
   p.done.push(m.id);HS.done++;sendTo(id,{t:'td',id:m.id});if(HS.done>=HS.total)endGame('crew')}
  else if(m.t==='kill'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.cd){
   var best=null,bd=KR;Object.keys(HS.p).forEach(function(k){var q=HS.p[k];if(q.alive&&q.role==='crew'&&d(p,q)<bd){bd=d(p,q);best=k}});
-  if(best){var q=HS.p[best];q.alive=false;HS.bodies.push({id:best,x:q.x,y:q.y});p.x=q.x;p.y=q.y;p.cd=Date.now()+KCD;if(!checkWin())return}}
+  if(best){var q=HS.p[best];q.alive=false;HS.bodies.push({id:best,x:q.x,y:q.y});p.x=q.x;p.y=q.y;p.cd=Date.now()+HS.cfg.cooldown;if(!checkWin())return}}
  else if(m.t==='rep'&&HS.phase==='play'&&p.alive&&HS.bodies.some(function(b){return d(p,b)<110}))startMeet(id,'body');
  else if(m.t==='meet'&&HS.phase==='play'&&p.alive&&!p.usedMeet&&d(p,{x:TBL[0],y:TBL[1]})<110){p.usedMeet=1;startMeet(id,'table')}
  else if(m.t==='vote'&&HS.phase==='meet'&&p.alive&&HS.votes[id]==null){HS.votes[id]=m.v;bcast({t:'voted',id:id});
@@ -138,12 +160,13 @@ function handle(id,m){
 function d(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 $('start').onclick=function(){
  var ids=Object.keys(P);if(ids.length<3)return;
- HS={phase:'play',p:{},bodies:[],done:0,total:0,votes:{},t:0};
- var imp=ids[Math.random()*ids.length|0];
+ readRoomCfg();if(roomCfg.imps>=ids.length){$('lmsg').textContent='There must be more crew than impostors.';return}
+ HS={phase:'play',p:{},bodies:[],done:0,total:0,votes:{},t:0,cfg:Object.assign({},roomCfg)};
+ var shuffled=ids.slice().sort(function(){return Math.random()-.5}),imps=shuffled.slice(0,roomCfg.imps);
  ids.forEach(function(k,i){
-  var a=i/ids.length*Math.PI*2,tl=[0,1,2,3,4,5].sort(function(){return Math.random()-.5}).slice(0,3);
-  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:k===imp?'imp':'crew',tasks:k===imp?[]:tl,done:[],cd:Date.now()+8000,usedMeet:0};
-  if(k!==imp)HS.total+=3;
+  var a=i/ids.length*Math.PI*2,tl=[0,1,2,3,4,5].sort(function(){return Math.random()-.5}).slice(0,roomCfg.tasks),isImp=imps.indexOf(k)>-1;
+  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],cd:Date.now()+roomCfg.cooldown,usedMeet:0};
+  if(!isImp)HS.total+=roomCfg.tasks;
  });
  ids.forEach(function(k){sendTo(k,{t:'role',role:HS.p[k].role,tasks:HS.p[k].tasks,total:HS.total,P:P})});
  clearInterval(HS.t);HS.t=setInterval(tick,50);
@@ -151,7 +174,7 @@ $('start').onclick=function(){
 function tick(){
  if(!HS||HS.phase!=='play')return;
  Object.keys(HS.p).forEach(function(k){var p=HS.p[k];if(!p.alive)return;var l=Math.hypot(p.ix,p.iy);if(l>1){p.ix/=l;p.iy/=l}
-  move(p,p.ix*SPD*.05,p.iy*SPD*.05)});
+  move(p,p.ix*SPD*HS.cfg.speed*.05,p.iy*SPD*HS.cfg.speed*.05)});
  bcast({t:'st',p:Object.keys(HS.p).map(function(k){var p=HS.p[k];return[k,p.x|0,p.y|0,p.alive?1:0,p.role==='imp'&&HS.bodies.length&&0?1:0]}),b:HS.bodies,dn:HS.done});
 }
 function move(p,dx,dy){
@@ -175,7 +198,7 @@ function tally(){
  setTimeout(function(){
   if(!HS)return;if(!checkWin())return;
   HS.bodies=[];var ids=Object.keys(HS.p),n=0;
-  ids.forEach(function(k){var p=HS.p[k];var a=n++/ids.length*Math.PI*2;p.x=TBL[0]+Math.cos(a)*70;p.y=TBL[1]+Math.sin(a)*70;p.cd=Date.now()+8000});
+  ids.forEach(function(k){var p=HS.p[k];var a=n++/ids.length*Math.PI*2;p.x=TBL[0]+Math.cos(a)*70;p.y=TBL[1]+Math.sin(a)*70;p.cd=Date.now()+HS.cfg.cooldown});
   HS.phase='play';bcast({t:'resume'});
  },4000);
 }
@@ -194,7 +217,7 @@ $('again').onclick=function(){bcast({t:'lobby',P:P})};
 
 /* ---------- client logic ---------- */
 function onMsg(m){
- if(m.t==='lobby'){P=m.P;C.phase='lobby';show('lobby');lobbyUI()}
+ if(m.t==='lobby'){P=m.P;if(m.cfg)roomCfg=m.cfg;C.phase='lobby';show('lobby');lobbyUI()}
  else if(m.t==='role'){P=m.P;C.role=m.role;C.tasks=m.tasks;C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
   killAt=Date.now()+8000;show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
   $('role').style.color=m.role==='imp'?'#fb7185':'#8fe3ff';taskUI()}
@@ -210,9 +233,11 @@ function onMsg(m){
   $('again').hidden=!isHost}
 }
 function lobbyUI(){
- var ids=Object.keys(P);$('plist').innerHTML=ids.map(function(k){return'<span class="chip" style="background:'+P[k].col+'33;border-color:'+P[k].col+'">'+esc(P[k].name)+'</span>'}).join('');
- $('start').hidden=!isHost;$('start').disabled=ids.length<3;
- $('lmsg').textContent=ids.length+' player'+(ids.length>1?'s':'')+(ids.length<3?' (need 3+)':'')+(isHost?'':' - waiting for host');
+ var ids=Object.keys(P);$('roomsettings').style.display=isHost?'block':'none';
+ if(isHost){$('cfgImps').value=String(roomCfg.imps);$('cfgSpeed').value=String(roomCfg.speed);$('cfgCooldown').value=String(roomCfg.cooldown);$('cfgTasks').value=String(roomCfg.tasks)}
+ $('plist').innerHTML=ids.map(function(k){return'<span class="chip" style="background:'+P[k].col+'33;border-color:'+P[k].col+'">'+esc(P[k].name)+'</span>'}).join('');
+ $('start').hidden=!isHost;$('start').disabled=ids.length<3||roomCfg.imps>=ids.length;
+ $('lmsg').textContent=ids.length+' player'+(ids.length>1?'s':'')+(ids.length<3?' (need 3+)':'')+(isHost?'':' - waiting for host')+(roomCfg.imps>=ids.length?' · reduce impostors to start':'');
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){return(C.mine[i]?'&#10003; ':'&#9675; ')+['Reactor','Engine','Comms','Medbay','Cargo','Shields'][i]}).join('<br>')}
