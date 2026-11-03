@@ -1,98 +1,130 @@
-/* Johnny Among Us — The Skeld map data.
-   Canvas coordinates are currently mapped into the existing 1440×870 game world.
-   Protocol coordinates and vent graph are retained alongside those anchors so the
-   artwork/collision geometry can be calibrated without losing authoritative IDs. */
-(function (global) {
-  'use strict';
+/* Johnny Among Us — The Skeld map geometry and gameplay anchors.
+ *
+ * The room/corridor outline was independently adapted from the public overview
+ * geometry in HorseyHangout/au_skeld (CC BY-NC-SA 4.0), used as a measured
+ * geometry reference. No Innersloth textures, models, sprites or sounds are
+ * included. See docs/skeld-map-reference.md and the source LICENSE.
+ *
+ * The 1024×1024 source drawing has actual ship geometry in x=5..1020,
+ * y=4..563. A uniform 1.4 scale places it into the existing 1440×870
+ * multiplayer world without changing player/network world size.
+ */
+(function(global){
+'use strict';
+const SOURCE={"hull":"M 70,190 H 45 L 5,217 v 116 l 40,27 h 25 v -39 h 39 v -28 h 37 v 80 h -45 v 84 l 29,22 h 82 v -35 h 48 v 63 h 185 v 8 l 48,48 h 95 V 457 h 82 v 32 h -67 v 50 l 24,24 h 70 l 23,-23 v -51 h -14 v -32 h 29 v 44 h 58 l 50,-50 v -56 h -35 v -72 h 58 v -40 h 70 v 29 h 47 l 37,-30 v -34 l -38,-31 h -46 v 30 h -70 v -35 h -58 v -48 h 35 V 108 L 792,57 h -57 v 44 H 683 V 71 L 616,4 H 464 l -45,45 v 54 H 212 V 77 h -82 l -29,22 v 84 h 45 v 74 H 109 V 229 H 70 Z","wallWest":"m 357,471 h 88 v -73 l 35,-35 h 52 V 251 h -55 l -58,-58 v -54 h -54 v 32 h 34 v 61 l 41,41 v 11 H 319 l -19,-23 v -90 h 30 V 139 H 212 v 44 h -31 v 74 h 39 v -25 l 21,-21 h 24 l 17,17 v 91 h -62 v -26 h -39 v 80 h 31 v 35 h 83 v 63 h 27 V 328 h 121 v 12 l -30,30 v 48 l -23,23 h -33 z","wallEast":"M 567,251 v 46 h 164 v 73 l -21,21 h -97 v -58 h -46 v 30 h 21 v 59 h 147 v -5 l 22,-22 h 16 V 287 h 57 v -40 h -80 v 21 h -88 v -15 l 38,-38 v -11 h 50 v 8 h 23 v -48 h -15 l -23,-23 v -5 h -52 v 54 l -61,61 z","cafeteria":"M 616,4 H 464 l -45,45 v 144 l 58,58 h 145 l 61,-61 V 71 Z","weapons":"m 735,57 v 84 l 23,23 h 85 V 108 L 792,57 Z","navigation":"m 936,217 v 95 h 47 l 37,-30 v -34 l -38,-31 z","shields":"m 843,395 h -86 l -22,22 v 84 h 58 l 50,-50 z","communications":"m 720,489 v 51 l -23,23 h -70 l -24,-24 v -50 z","storage":"M 588,563 V 363 H 480 l -35,35 v 117 l 48,48 z","medbay":"m 300,171 h 99 v 61 l 41,41 v 11 H 319 l -19,-23 z","upperEngine":"M 212,183 V 77 h -82 l -29,22 v 84 z","reactor":"M 109,321 V 229 H 70 V 190 H 45 L 5,217 v 116 l 40,27 h 25 v -39 z","security":"m 220,232 v 87 h 62 v -91 l -17,-17 h -24 z","lowerEngine":"M 101,373 H 212 V 479 H 130 L 101,457 Z","electrical":"M 390,441 H 322 V 328 h 121 v 12 l -30,30 v 48 z","admin":"m 613,297 v 94 h 97 l 21,-21 v -73 z","o2":"m 750,268 v -64 h -50 v 11 l -38,38 v 15 z","hallTop":"M 419,139 V 103 H 212 v 36 h 118 v 32 h 35 v -32 z","hallWest":"m 146,183 v 74 h -37 v 36 h 37 v 80 h 35 v -80 h 39 v -36 h -39 v -74 z","hallSouth":"m 212,408 v 36 h 48 v 63 h 185 v -36 h -88 v -30 h -35 v 30 h -27 v -63 z","hallCafeteria":"m 532,251 h 35 v 46 h 46 v 36 h -46 v 30 h -35 z","hallAdmin":"m 588,422 h 147 v 35 h -29 v 32 h -36 v -32 h -82 z","hallEast":"M 773,395 V 287 h 57 v -40 h -80 v -35 h 23 v -48 h 35 v 48 h 58 v 35 h 70 v 36 h -70 v 40 h -58 v 72 z","hallBridge":"m 683,101 h 52 v 35 h -52 z"};
+const TRANSFORM={scale:1.4,x:7,y:38};
+function parsePath(d){
+  const tokens=d.match(/[a-zA-Z]|[-+]?(?:\\d*\\.)?\\d+(?:[eE][-+]?\\d+)?/g)||[];
+  const paths=[];let path=null,x=0,y=0,sx=0,sy=0,cmd=null,i=0;
+  const isCommand=t=>/^[a-zA-Z]$/.test(t);
+  while(i<tokens.length){
+    if(isCommand(tokens[i])){cmd=tokens[i++];if(cmd==='z'||cmd==='Z'){if(path&&path.length>2){paths.push(path);path=null;}x=sx;y=sy;cmd=null;continue;}}
+    if(!cmd)continue;
+    const lower=cmd===cmd.toLowerCase(),op=cmd.toUpperCase();
+    if(op==='M'||op==='L'){
+      const nx=Number(tokens[i++]),ny=Number(tokens[i++]);
+      if(!Number.isFinite(nx)||!Number.isFinite(ny))break;
+      x=lower?x+nx:nx;y=lower?y+ny:ny;
+      if(op==='M'){if(path&&path.length>2)paths.push(path);path=[[x,y]];sx=x;sy=y;cmd=lower?'l':'L';}
+      else {if(!path){path=[[x,y]];sx=x;sy=y;}else path.push([x,y]);}
+    }else if(op==='H'){
+      const nx=Number(tokens[i++]);if(!Number.isFinite(nx))break;x=lower?x+nx:nx;if(path)path.push([x,y]);
+    }else if(op==='V'){
+      const ny=Number(tokens[i++]);if(!Number.isFinite(ny))break;y=lower?y+ny:ny;if(path)path.push([x,y]);
+    }else{throw new Error('Unsupported Skeld SVG path command: '+cmd);}
+  }
+  if(path&&path.length>2)paths.push(path);
+  return paths;
+}
+function mapPoly(poly){return poly.map(p=>[TRANSFORM.x+p[0]*TRANSFORM.scale,TRANSFORM.y+p[1]*TRANSFORM.scale]);}
+const FLOORS=[["Cafeteria","cafeteria","cafeteria"],["Weapons","weapons","weapons"],["Navigation","navigation","nav"],["Shields","shields","shields"],["Communications","communications","comms"],["Storage","storage","storage"],["MedBay","medbay","medbay"],["Upper Engine","upperEngine","engine"],["Reactor","reactor","reactor"],["Security","security","security"],["Lower Engine","lowerEngine","engine"],["Electrical","electrical","electrical"],["Admin","admin","admin"],["O2","o2","o2"]].map(([n,key,kind])=>({n:n,kind:kind,c:'#aeb2ad',p:mapPoly(parsePath(SOURCE[key])[0])}));
+const HALLS=["hallTop","hallWest","hallSouth","hallCafeteria","hallAdmin","hallEast","hallBridge"].map(key=>mapPoly(parsePath(SOURCE[key])[0]));
+const HULL=mapPoly(parsePath(SOURCE.hull)[0]);
+const WALLS=["hull","wallWest","wallEast"].flatMap(key=>parsePath(SOURCE[key]).map(mapPoly));
 
-  const FLOORS = [
-    {n:'Upper Engine',p:[[205,112],[376,112],[400,138],[400,270],[372,300],[205,300]],c:'#747c79',kind:'engine'},
-    {n:'Reactor',p:[[62,270],[230,250],[260,278],[260,493],[220,530],[62,505]],c:'#716d68',kind:'reactor'},
-    {n:'Security',p:[[350,292],[476,292],[495,320],[495,455],[468,482],[350,482]],c:'#657b79',kind:'security'},
-    {n:'Lower Engine',p:[[205,520],[376,520],[400,548],[400,678],[372,705],[205,690]],c:'#747c79',kind:'engine'},
-    {n:'MedBay',p:[[480,246],[640,246],[682,280],[682,405],[645,444],[500,430],[480,400]],c:'#9aa9a2',kind:'medbay'},
-    {n:'Cafeteria',p:[[650,18],[946,18],[1010,82],[1010,298],[950,382],[700,382],[630,298],[630,88]],c:'#aaa996',kind:'cafeteria'},
-    {n:'Weapons',p:[[1050,78],[1170,78],[1230,138],[1230,248],[1180,286],[1050,286]],c:'#8b9993',kind:'weapons'},
-    {n:'O2',p:[[990,294],[1110,294],[1140,326],[1140,410],[1110,432],[990,432]],c:'#839995',kind:'o2'},
-    {n:'Navigation',p:[[1280,300],[1390,300],[1440,350],[1440,450],[1390,492],[1280,492]],c:'#84999b',kind:'nav'},
-    {n:'Admin',p:[[890,418],[1065,418],[1095,448],[1095,558],[1055,592],[890,592]],c:'#8c9b91',kind:'admin'},
-    {n:'Electrical',p:[[480,462],[650,462],[682,492],[682,642],[650,680],[480,680]],c:'#667a70',kind:'electrical'},
-    {n:'Storage',p:[[650,520],[900,520],[950,570],[950,760],[900,820],[690,820],[640,770],[640,575]],c:'#928e79',kind:'storage'},
-    {n:'Communications',p:[[900,650],[1065,650],[1095,680],[1095,785],[1055,825],[925,825],[900,790]],c:'#708681',kind:'comms'},
-    {n:'Shields',p:[[1090,558],[1225,558],[1260,595],[1260,705],[1220,750],[1090,750]],c:'#879a94',kind:'shields'}
-  ];
+const VENT_META=[
+ {id:0,name:'Admin',protocol:[2.543373,-9.59182],canvas:[960,520],links:[1,2]},
+ {id:1,name:'Right hallway',protocol:[9.38308,-6.0749207],canvas:[1180,472],links:[0,2]},
+ {id:2,name:'Cafeteria',protocol:[4.2584915,0.08728027],canvas:[830,248],links:[0,1]},
+ {id:3,name:'Electrical',protocol:[-9.777372,-7.6704063],canvas:[546,570],links:[5,6]},
+ {id:4,name:'Upper Engine',protocol:[-15.288929,2.8827324],canvas:[245,220],links:[11]},
+ {id:5,name:'Security',protocol:[-12.534981,-6.586403],canvas:[357,402],links:[3,6]},
+ {id:6,name:'Medbay',protocol:[-10.608683,-3.8129234],canvas:[525,360],links:[3,5]},
+ {id:7,name:'Weapons',protocol:[8.819103,3.687191],canvas:[1113,178],links:[12]},
+ {id:8,name:'Lower Reactor',protocol:[-20.796825,-6.590065],canvas:[84,444],links:[9]},
+ {id:9,name:'Lower Engine',protocol:[-15.251087,-13.293049],canvas:[231,626],links:[8]},
+ {id:10,name:'Shields',protocol:[9.52224,-13.974211],canvas:[1127,661],links:[13]},
+ {id:11,name:'Upper Reactor',protocol:[-21.877165,-2.6886406],canvas:[84,360],links:[4]},
+ {id:12,name:'Upper Navigation',protocol:[16.007935,-2.8046074],canvas:[1372,402],links:[7]},
+ {id:13,name:'Lower Navigation',protocol:[16.007935,-6.0212097],canvas:[1372,437],links:[10]}
+];
+const VENT_GROUPS=[[4,11],[8,9],[3,5,6],[0,1,2],[7,12],[13,10]];
+const VENTS=VENT_META.map(v=>v.canvas.slice()),VENT_LINKS=VENT_META.map(v=>v.links.slice());
 
-  const HALLS = [
-    [[365,160],[655,160],[655,245],[365,245]],
-    [[240,350],[360,350],[360,425],[240,425]],
-    [[245,475],[355,475],[355,555],[245,555]],
-    [[450,365],[510,365],[510,425],[450,425]],
-    [[600,345],[690,345],[690,430],[600,430]],
-    [[975,165],[1070,165],[1070,245],[975,245]],
-    [[1070,245],[1150,245],[1150,320],[1070,320]],
-    [[1095,350],[1300,350],[1300,425],[1095,425]],
-    [[1065,455],[1300,455],[1300,520],[1065,520]],
-    [[815,365],[900,365],[900,455],[815,455]],
-    [[645,625],[720,625],[720,700],[645,700]],
-    [[895,755],[960,755],[960,825],[895,825]],
-    [[1030,625],[1110,625],[1110,700],[1030,700]],
-    [[900,555],[980,555],[980,635],[900,635]],
-    [[465,425],[535,425],[535,510],[465,510]],
-    [[370,600],[485,600],[485,670],[370,670]]
-  ];
+const TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE',null,'DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
+const ST=[
+ [105,450],[245,245],[535,390],[546,570],[930,520],[1127,680],[1115,180],[1380,410],
+ [115,470],[570,535],[830,300],[1015,360],[730,740],[1370,445],[540,610],[546,570],[830,300],[585,400]
+];
+const WIRE_STATIONS=[
+ {name:'Admin',point:[930,555],stages:[1,2]},
+ {name:'Cafeteria',point:[900,310],stages:[1,2]},
+ {name:'Electrical',point:[546,570],stages:[0]},
+ {name:'Navigation',point:[1380,420],stages:[0,1,2]},
+ {name:'Security',point:[357,450],stages:[2]},
+ {name:'Storage',point:[730,680],stages:[0,1]}
+];
+const POWER_TARGETS=[[950,780],[930,555],[1127,680],[1380,420],[245,245],[535,390],[1015,360]];
+const POWER_TARGET_NAMES=['COMMUNICATIONS','ADMIN','SHIELDS','NAVIGATION','UPPER ENGINE','MEDBAY','O2'];
+const TBL=[820,205];
 
-  const ST = [[150,395],[230,265],[580,410],[570,560],[990,510],[1170,650],[1140,185],[1345,400],[190,455],[575,500],[690,110],[1050,360],[800,730],[1370,445],[585,620],[570,510],[885,330],[610,415]];
-  const POWER_TARGETS = [[1020,780],[1050,550],[1170,650],[1345,455],[295,265],[580,410],[1050,360]];
-  const POWER_TARGET_NAMES = ['COMMUNICATIONS','ADMIN','SHIELDS','NAVIGATION','UPPER ENGINE','MEDBAY','O2'];
-  const TBL = [820,205];
-  const TASK_NAMES = ['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE','CLEAN VENT','DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
-
-  // Protocol IDs and X/Y values are exact source data. Canvas points are the
-  // current hand-mapped positions in this game's 1440×870 world and are flagged
-  // for calibration against the full-resolution visual reference.
-  const VENT_META = [
-    {id:0,name:'Admin',protocol:[2.543373,-9.59182],canvas:[990,510],links:[1,2]},
-    {id:1,name:'Right hallway',protocol:[9.38308,-6.0749207],canvas:[1170,490],links:[0,2]},
-    {id:2,name:'Cafeteria',protocol:[4.2584915,0.08728027],canvas:[950,320],links:[0,1]},
-    {id:3,name:'Electrical',protocol:[-9.777372,-7.6704063],canvas:[570,560],links:[5,6]},
-    {id:4,name:'Upper Engine',protocol:[-15.288929,2.8827324],canvas:[350,205],links:[11]},
-    {id:5,name:'Security',protocol:[-12.534981,-6.586403],canvas:[420,425],links:[3,6]},
-    {id:6,name:'MedBay',protocol:[-10.608683,-3.8129234],canvas:[580,350],links:[3,5]},
-    {id:7,name:'Weapons',protocol:[8.819103,3.687191],canvas:[1140,185],links:[12]},
-    {id:8,name:'Lower Reactor',protocol:[-20.796825,-6.590065],canvas:[165,455],links:[9]},
-    {id:9,name:'Lower Engine',protocol:[-15.251087,-13.293049],canvas:[350,615],links:[8]},
-    {id:10,name:'Shields',protocol:[9.52224,-13.974211],canvas:[1170,660],links:[13]},
-    {id:11,name:'Upper Reactor',protocol:[-21.877165,-2.6886406],canvas:[165,330],links:[4]},
-    {id:12,name:'Upper Navigation',protocol:[16.007935,-2.8046074],canvas:[1370,360],links:[7]},
-    {id:13,name:'Lower Navigation',protocol:[16.007935,-6.0212097],canvas:[1370,445],links:[10]}
-  ];
-
-  // The graph intentionally contains only genuine Skeld connections:
-  // engines north/south, medical wing, central Cafeteria/Admin/Hallway,
-  // east upper, and east lower.
-  const VENT_GROUPS = [[4,11],[8,9],[3,5,6],[0,1,2],[7,12],[13,10]];
-  const VENTS = VENT_META.map(v => v.canvas.slice());
-  const VENT_LINKS = VENT_META.map(v => v.links.slice());
-
-  const PANELS = [[535,545]];
-  const BLOCKERS = [
-    [700,100,82,55],[860,100,82,55],[775,185,82,55],[700,270,82,55],[860,270,82,55],
-    [520,285,42,90],[610,285,42,90],[545,365,90,28],
-    [950,465,85,64],[1080,145,120,80],[1320,340,75,70],[112,340,76,110],
-    [500,490,44,40],[600,490,44,40],[500,595,44,40],[600,595,44,40],
-    [720,600,62,58],[835,600,62,58],[720,710,62,58],[835,710,62,58],
-    [930,680,65,40],[1015,690,65,40],[1125,585,60,42],[1190,650,42,52],
-    [250,150,65,48],[300,555,65,48]
-  ];
-  const DOORWAYS = [[392,180,16,52,true],[252,365,16,50,true],[270,497,55,16,false],[392,610,16,48,true],[487,370,16,48,true],[674,355,16,50,true],[1002,180,16,50,true],[1090,278,54,16,false],[1132,360,16,48,true],[1272,360,16,48,true],[1272,465,16,48,true],[845,374,50,16,false],[860,410,50,16,false],[490,454,50,16,false],[635,640,16,48,true],[890,770,16,48,true],[1080,640,16,48,true],[930,560,16,48,true]];
-  const REACTOR_PANELS = [[205,300],[205,475]];
-  const O2_PANELS = [[1070,370],[1050,560]];
-  const COMMS_PANEL = [1030,760];
-
-  global.JohnnySkeldMapData = Object.freeze({
-    version: 1, world: {width:1440,height:870},
-    FLOORS, HALLS, ST, POWER_TARGETS, POWER_TARGET_NAMES, TBL, TASK_NAMES,
-    VENT_META, VENT_GROUPS, VENTS, VENT_LINKS, PANELS, BLOCKERS, DOORWAYS,
-    REACTOR_PANELS, O2_PANELS, COMMS_PANEL
-  });
+const DOORWAYS=[
+ [286,230,18,42,true], [145,390,18,42,true], [385,390,18,42,true],
+ [420,340,18,42,true], [286,625,18,42,true], [610,565,18,42,true],
+ [815,650,18,42,true], [850,500,18,42,true], [925,704,46,16,false],
+ [1090,590,46,16,false], [1022,180,46,16,false], [1305,405,18,42,true],
+ [975,350,46,16,false], [590,250,18,42,true], [918,250,18,42,true],
+ [760,375,46,16,false]
+];
+const PANELS=[[546,570]];
+const REACTOR_PANELS=[[130,365],[130,485]];
+const O2_PANELS=[[1000,350],[1035,385]];
+const COMMS_PANEL=[950,780];
+const CAMERAS=[
+ {name:'Security hallway',x:405,y:455,angle:0},
+ {name:'MedBay hallway',x:445,y:430,angle:0},
+ {name:'Admin hallway',x:1030,y:520,angle:Math.PI},
+ {name:'O2 hallway',x:1080,y:385,angle:Math.PI}
+];
+const PROPS=[
+ {id:'upper-engine',x:255,y:205,w:110,h:84},
+ {id:'lower-engine',x:255,y:625,w:110,h:84},
+ {id:'reactor-core',x:90,y:420,w:96,h:110},
+ {id:'security-desk',x:360,y:405,w:56,h:38},
+ {id:'medbay-bed-a',x:500,y:325,w:50,h:86},
+ {id:'medbay-bed-b',x:570,y:325,w:50,h:86},
+ {id:'cafeteria-table-a',x:740,y:125,w:86,h:58},
+ {id:'cafeteria-table-b',x:890,y:125,w:86,h:58},
+ {id:'cafeteria-table-c',x:740,y:295,w:86,h:58},
+ {id:'cafeteria-table-d',x:890,y:295,w:86,h:58},
+ {id:'meeting-table',x:820,y:205,w:64,h:44},
+ {id:'weapons-cannon',x:1115,y:180,w:116,h:76},
+ {id:'admin-table',x:930,y:500,w:110,h:78},
+ {id:'shield-generator',x:1127,y:650,w:96,h:96}
+];
+const BLOCKERS=PROPS.map(p=>[p.x-p.w/2,p.y-p.h/2,p.w,p.h]).concat([
+ [480,492,30,48],[520,492,30,48],[560,492,30,48],[600,492,30,48],
+ [480,610,30,42],[520,610,30,42],[560,610,30,42],[600,610,30,42],
+ [660,590,42,42],[750,590,42,42],[800,590,38,38],[660,705,42,42],[800,705,38,38],[740,770,42,38],
+ [1000,335,46,26],[1032,373,38,26],[1340,340,58,32],[1380,405,55,32],[1310,430,50,26],
+ [890,565,46,24],[970,565,46,24],[950,755,70,32],[1090,610,50,28],[1160,700,50,28]
+]);
+const DEFAULT_WIRE_ROUTE=[WIRE_STATIONS[2].point,WIRE_STATIONS[5].point,WIRE_STATIONS[0].point];
+global.JohnnySkeldMapData=Object.freeze({
+ version:2,world:{width:1440,height:870},transform:TRANSFORM,
+ FLOORS,HALLS,HULL,WALLS,VENT_META,VENT_GROUPS,VENTS,VENT_LINKS,
+ TASK_NAMES,ST,WIRE_STATIONS,POWER_TARGETS,POWER_TARGET_NAMES,TBL,
+ DOORWAYS,PANELS,REACTOR_PANELS,O2_PANELS,COMMS_PANEL,CAMERAS,PROPS,BLOCKERS,
+ DEFAULT_WIRE_ROUTE
+});
 })(window);
