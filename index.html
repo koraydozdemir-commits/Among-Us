@@ -69,7 +69,7 @@ WALLS=WALLS.concat(WALLS.map(function(w){return[W-w[0]-w[2],H-w[1]-w[3],w[2],w[3
 var ST=[[200,180],[1400,180],[200,820],[1400,820],[800,120],[800,880]],TBL=[800,500];
 var VENTS=[[540,180],[1060,180],[540,820],[1060,820]],PANELS=[[690,390],[910,610]];
 var ambience=Array.from({length:54},function(_,i){return{x:(i*347)%W,y:(i*613)%H,r:1+(i%3),phase:i*.73}});
-var CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 var isHost=false,peer,conns={},hostConn,me='me',connectTimer=null,connectBusy=false;
 var roomCfg={imps:1,speed:1,cooldown:12000,tasks:3};
