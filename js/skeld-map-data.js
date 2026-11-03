@@ -86,12 +86,16 @@ const POWER_TARGET_NAMES=['COMMUNICATIONS','O2','SHIELDS','NAVIGATION','WEAPONS'
 const TBL=[820,205];
 
 const DOORWAYS=[
- [286,230,18,42,true], [145,390,18,42,true], [385,390,18,42,true],
- [420,340,18,42,true], [286,625,18,42,true], [621,576,18,42,true],
- [815,650,18,42,true], [857,499,18,42,true], [925,704,46,16,false],
- [1090,590,46,16,false], [1022,180,46,16,false], [1305,405,18,42,true],
- [975,350,46,16,false], [590,250,18,42,true], [918,250,18,42,true],
- [760,375,46,16,false]
+ // Upper Engine, Reactor, Security, MedBay, Lower Engine, Electrical, Storage, Admin.
+ [295,230,18,42,true], [145,390,18,42,true], [392,390,18,42,true],
+ [418,340,18,42,true], [295,625,18,42,true], [621,576,18,42,true],
+ [815,650,18,42,true], [857,499,18,42,true],
+ // Communications, Shields, Weapons, Navigation.
+ [925,715,46,16,false], [1090,583,46,16,false], [1027,167,18,42,true],
+ [1305,405,18,42,true],
+ // O2 diagonal doorway, Cafeteria west/east/south openings.
+ [948,347,46,16,false,Math.PI*0.75], [585,250,18,42,true],
+ [954,250,18,42,true], [760,381,46,16,false]
 ];
 const PANELS=[[546,570]];
 const REACTOR_PANELS=[[130,365],[130,485]];
