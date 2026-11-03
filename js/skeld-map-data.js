@@ -64,18 +64,18 @@ const VENTS=VENT_META.map(v=>v.canvas.slice()),VENT_LINKS=VENT_META.map(v=>v.lin
 const TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE',null,'DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
 const ST=[
  [152,420],[285,270],[535,390],[500,555],[1000,550],[1089,710],[1178,225],[1367,418],
- [54,353],[585,555],[950,300],[970,358],[730,740],[1389,384],null,[546,570],[830,300],[585,400]
+ [54,353],[585,555],[950,316],[970,358],[730,740],[1389,384],null,[546,570],[830,300],[585,400]
 ];
 const WIRE_STATIONS=[
  {name:'Admin',point:[1000,555],stages:[1,2]},
- {name:'Cafeteria',point:[950,300],stages:[1,2]},
+ {name:'Cafeteria',point:[950,316],stages:[1,2]},
  {name:'Electrical',point:[500,555],stages:[0]},
  {name:'Navigation',point:[1367,418],stages:[0,1,2]},
  {name:'Security',point:[357,450],stages:[2]},
  {name:'Storage',point:[730,680],stages:[0,1]}
 ];
 const DOWNLOAD_STATIONS=[
- {name:'Cafeteria',point:[950,300]},
+ {name:'Cafeteria',point:[950,316]},
  {name:'Weapons',point:[1178,225]},
  {name:'Navigation',point:[1389,384]},
  {name:'Communications',point:[990,805]},
