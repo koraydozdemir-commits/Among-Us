@@ -965,7 +965,7 @@ function drawHallWalls(poly){
  cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#819a9b';cx.lineWidth=7;cx.stroke();cx.strokeStyle='rgba(224,239,229,.65)';cx.lineWidth=2;cx.stroke();cx.restore();
 }
 function drawDoor(x,y,w,h,vertical){
- cx.save();cx.shadowColor='#0008';cx.shadowBlur=5;cx.fillStyle='#273e45';cx.fillRect(x,y,w,h);cx.shadowBlur=0;
+ cx.save();cx.shadowColor='#0008';cx.shadowBlur=5;cx.shadowBlur=0;
  cx.strokeStyle='#c0d1c8';cx.lineWidth=3;
  if(vertical){
   cx.fillRect(x,y,4,h);cx.fillRect(x+w-4,y,4,h);
