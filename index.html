@@ -327,7 +327,8 @@ if(!MAPDATA)throw new Error('Skeld map data failed to load.');
 var FLOORS=MAPDATA.FLOORS,HALLS=MAPDATA.HALLS,ST=MAPDATA.ST,
  POWER_TARGETS=MAPDATA.POWER_TARGETS,POWER_TARGET_NAMES=MAPDATA.POWER_TARGET_NAMES,
  TBL=MAPDATA.TBL,TASK_NAMES=MAPDATA.TASK_NAMES,VENTS=MAPDATA.VENTS,
- VENT_LINKS=MAPDATA.VENT_LINKS,PANELS=MAPDATA.PANELS,BLOCKERS=MAPDATA.BLOCKERS;
+ VENT_LINKS=MAPDATA.VENT_LINKS,PANELS=MAPDATA.PANELS,BLOCKERS=MAPDATA.BLOCKERS,
+ WIRE_STATIONS=MAPDATA.WIRE_STATIONS,CAMERAS=MAPDATA.CAMERAS;
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /* Supabase Realtime transport. The host remains authoritative; room traffic is
@@ -685,25 +686,36 @@ function handle(id,m){
   if(Object.keys(HS.p).every(function(k){return!HS.p[k].alive||HS.votes[k]!=null}))tally()}
 }
 function d(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function randomWireRoute(){
+ var byName={};WIRE_STATIONS.forEach(function(s){byName[s.name]=s});
+ var first=['Admin','Electrical','Navigation','Storage'];
+ var second=['Admin','Cafeteria','Navigation','Storage'];
+ var third=['Admin','Cafeteria','Navigation','Security'];
+ var a=first[Math.random()*first.length|0];
+ var b=second.filter(function(n){return n!==a})[Math.random()*second.filter(function(n){return n!==a}).length|0];
+ var opts=third.filter(function(n){return n!==a&&n!==b});
+ var c=opts[Math.random()*opts.length|0];
+ return [byName[a].point,byName[b].point,byName[c].point].map(function(p){return p.slice()});
+}
 function taskStageCount(id){return id===3?3:(id===10||id===15||id===16?2:(id===12?3:1))}
 function taskLocation(id,stage,actor){
- if(id===3){var route=(actor&&actor.wireRoute)||C.wireRoute||[ST[3],[800,665],[690,110]];return route[Math.min(stage,route.length-1)]}
- if(id===10)return stage===0?ST[10]:[1050,550];
- if(id===12)return [ST[12],[295,265],[295,610]][Math.min(stage,2)];
+ if(id===3){var route=(actor&&actor.wireRoute)||C.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;return route[Math.min(stage,route.length-1)]}
+ if(id===10)return stage===0?ST[10]:[1000,555];
+ if(id===12)return [ST[12],[165,205],[165,650]][Math.min(stage,2)];
  if(id===15)return stage===0?ST[15]:((actor&&actor.powerTarget)||C.powerTarget||POWER_TARGETS[0]);
- if(id===16)return stage===0?ST[16]:[800,665];
+ if(id===16)return stage===0?ST[16]:[730,740];
  return ST[id];
 }
 $('start').onclick=function(){
  var ids=Object.keys(P);if(ids.length<3)return;
  readRoomCfg();if(roomCfg.imps>=ids.length){$('lmsg').textContent='There must be more crew than impostors.';return}
- HS={phase:'play',p:{},bodies:[],done:0,total:0,votes:{},t:0,cfg:Object.assign({},roomCfg),sabotage:null,wireRoute:[ST[3],[800,665],[690,110]]};
+ HS={phase:'play',p:{},bodies:[],done:0,total:0,votes:{},t:0,cfg:Object.assign({},roomCfg),sabotage:null,wireRoute:randomWireRoute()};
  var shuffled=ids.slice().sort(function(){return Math.random()-.5}),imps=shuffled.slice(0,roomCfg.imps);
  // Common tasks are selected once and shared by every crewmate in this match.
  var commonTasks=[3,4].filter(function(){return Math.random()<.5});
  ids.forEach(function(k,i){
   var a=i/ids.length*Math.PI*2,isImp=imps.indexOf(k)>-1;
-  var individual=Array.from({length:TASK_NAMES.length},function(_,n){return n}).filter(function(n){return commonTasks.indexOf(n)<0}).sort(function(){return Math.random()-.5});
+  var individual=Array.from({length:TASK_NAMES.length},function(_,n){return n}).filter(function(n){return TASK_NAMES[n]!==null&&commonTasks.indexOf(n)<0}).sort(function(){return Math.random()-.5});
   var tl=commonTasks.concat(individual.slice(0,Math.max(0,roomCfg.tasks-commonTasks.length)));
   HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],stages:{},wireRoute:HS.wireRoute,powerTarget:POWER_TARGETS[Math.random()*POWER_TARGETS.length|0],cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0};
   if(!isImp)HS.total+=tl.length;
@@ -793,7 +805,7 @@ function onMsg(m){
   if(!isHost){var entered=$('jc').value.trim().toUpperCase();$('code').textContent=entered;$('quickcode').textContent=entered;$('copycode').innerHTML='COPY CODE <span>▣</span>';}
   $('lobbyMenu').hidden=true;lobbyUI()
  }
- else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||[ST[3],[800,665],[690,110]];C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
+ else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
   killAt=Date.now()+(m.cooldown||12000);show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
   $('role').style.color=m.role==='imp'?'#fb7185':'#8fe3ff';taskUI()}
  else if(m.t==='lpos'){P=m.P}
@@ -1203,18 +1215,32 @@ function floorTexture(poly,room){
  cx.save();polyPath(poly);cx.clip();
  var xs=poly.map(function(p){return p[0]}),ys=poly.map(function(p){return p[1]});
  var x=Math.min.apply(null,xs),y=Math.min.apply(null,ys),w=Math.max.apply(null,xs)-x,h=Math.max.apply(null,ys)-y;
- cx.fillStyle='#aeb2ad';cx.fillRect(x,y,w,h);
- cx.fillStyle='rgba(255,255,255,.13)';cx.fillRect(x,y,w,Math.max(3,h*.025));
- cx.strokeStyle='rgba(61,72,72,.13)';cx.lineWidth=2;
- for(var xx=x+30;xx<x+w;xx+=64){cx.beginPath();cx.moveTo(xx,y+8);cx.lineTo(xx,y+h-8);cx.stroke()}
- for(var yy=y+30;yy<y+h;yy+=64){cx.beginPath();cx.moveTo(x+8,yy);cx.lineTo(x+w-8,yy);cx.stroke()}
+ var palette={hall:'#66787a',cafeteria:'#c1c0b3',engine:'#79786f',reactor:'#687a75',security:'#7e9189',medbay:'#b9c3ba',weapons:'#a4aca5',o2:'#879994',nav:'#8c9d9c',admin:'#9c9b8c',electrical:'#788172',storage:'#a59c84',comms:'#82928d',shields:'#8e9d93'};
+ var base=palette[room.kind]||'#89938e';
+ var g=cx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,base);g.addColorStop(.55,'#929d95');g.addColorStop(1,'#596761');
+ cx.fillStyle=g;cx.fillRect(x,y,w,h);
+ // Fine floor seams, clipped to the exact room/corridor silhouette.
+ cx.strokeStyle='rgba(22,33,34,.14)';cx.lineWidth=1.35;
+ for(var xx=x+28;xx<x+w;xx+=54){cx.beginPath();cx.moveTo(xx,y+4);cx.lineTo(xx,y+h-4);cx.stroke()}
+ for(var yy=y+28;yy<y+h;yy+=54){cx.beginPath();cx.moveTo(x+4,yy);cx.lineTo(x+w-4,yy);cx.stroke()}
+ cx.fillStyle='rgba(255,255,255,.08)';cx.fillRect(x,y,w,Math.max(3,h*.015));
  if(room.kind==='cafeteria'){
-  for(var yy=y-30;yy<y+h+30;yy+=54)for(var xx=x-30;xx<x+w+30;xx+=54){
-   cx.fillStyle=((Math.floor(xx/54)+Math.floor(yy/54))%2)?'rgba(73,83,81,.055)':'rgba(255,255,255,.07)';cx.fillRect(xx,yy,54,54);
+  for(var cy=y-24;cy<y+h+24;cy+=48)for(var cxp=x-24;cxp<x+w+24;cxp+=48){
+   cx.fillStyle=((Math.floor(cxp/48)+Math.floor(cy/48))&1)?'rgba(49,59,57,.055)':'rgba(255,255,255,.1)';
+   cx.fillRect(cxp,cy,48,48);
   }
- }
- if(room.kind==='electrical'){
-  for(var z=0;z<6;z++){cx.strokeStyle=['#bd8b45','#4c9d91','#a65353'][z%3];cx.lineWidth=3;cx.beginPath();cx.moveTo(x+12,y+28+z*18);cx.lineTo(x+w-12,y+28+z*18);cx.stroke()}
+ }else if(room.kind==='storage'){
+  cx.strokeStyle='rgba(212,186,127,.34)';cx.lineWidth=2;
+  for(var gx=x+22;gx<x+w;gx+=44){cx.beginPath();cx.moveTo(gx,y+4);cx.lineTo(gx,y+h-4);cx.stroke()}
+  for(var gy=y+22;gy<y+h;gy+=44){cx.beginPath();cx.moveTo(x+4,gy);cx.lineTo(x+w-4,gy);cx.stroke()}
+ }else if(room.kind==='electrical'){
+  for(var k=0;k<5;k++){cx.strokeStyle=['#c89b55','#4d8a80','#a55d4d'][k%3];cx.lineWidth=2.2;cx.beginPath();cx.moveTo(x+12,y+25+k*18);cx.lineTo(x+w-12,y+25+k*18);cx.stroke()}
+ }else if(room.kind==='engine'){
+  cx.strokeStyle='rgba(224,184,124,.16)';cx.lineWidth=3;
+  for(var ey=y+30;ey<y+h;ey+=42){cx.beginPath();cx.moveTo(x+8,ey);cx.lineTo(x+w-8,ey);cx.stroke()}
+ }else if(room.kind==='hall'){
+  cx.fillStyle='rgba(218,234,227,.12)';
+  for(var lx=x+8;lx<x+w-6;lx+=84){cx.fillRect(lx,y+6,30,4);cx.fillRect(lx,y+h-10,30,4)}
  }
  cx.restore();
 }
@@ -1278,32 +1304,51 @@ function drawEngine(x,y){
  cx.restore();
 }
 function drawFurniture(){
- // Upper and lower engines
- drawEngine(295,205);drawConsole(230,265,60,30,'#e8b96c');drawEngine(295,610);drawConsole(230,660,60,30,'#e8b96c');
- // Reactor chamber and security
- drawReactor(150,395);drawConsole(205,300,48,28);drawConsole(205,475,48,28);
- drawConsole(420,330,78,34,'#7ee0d4');drawConsole(420,390,78,34,'#7ee0d4');drawConsole(420,450,78,34,'#7ee0d4');
- // MedBay beds and scanner
- drawBed(535,325);drawBed(615,325);drawConsole(580,410,82,34,'#8ce4d8');
- cx.save();cx.strokeStyle='#9fe8e0';cx.lineWidth=5;cx.shadowColor='#7cefe2';cx.shadowBlur=14;cx.beginPath();cx.ellipse(580,370,55,25,0,0,Math.PI*2);cx.stroke();cx.restore();
- // Cafeteria: five unmistakable blue round tables
- [[740,125],[890,125],[740,295],[890,295]].forEach(function(p){drawTable(p[0],p[1],43,29)});
- // Weapons cannon and O2 equipment
- cx.save();cx.translate(1140,185);cx.shadowColor='#000b';cx.shadowBlur=12;cx.fillStyle='#405a67';cx.strokeStyle='#c1d1c8';cx.lineWidth=5;cx.beginPath();cx.roundRect(-58,-38,116,76,15);cx.fill();cx.stroke();cx.fillStyle='#1a3547';cx.beginPath();cx.arc(0,0,25,0,7);cx.fill();cx.strokeStyle='#80d8df';cx.lineWidth=5;cx.beginPath();cx.arc(0,0,15,0,7);cx.stroke();cx.restore();
- drawConsole(1050,345,75,40,'#76dfce');drawConsole(1090,395,55,32);
- // Navigation cockpit
- drawConsole(1345,350,80,42,'#72e4d7');drawConsole(1390,425,68,38,'#72e4d7');drawConsole(1315,445,58,32);
- // Admin map table and terminals
- cx.save();cx.shadowColor='#000a';cx.shadowBlur=12;cx.fillStyle='#593e50';cx.strokeStyle='#c7b7ae';cx.lineWidth=5;cx.beginPath();cx.roundRect(930,455,125,85,12);cx.fill();cx.stroke();cx.shadowBlur=0;cx.fillStyle='#174d48';cx.strokeStyle='#78d6a6';cx.lineWidth=4;cx.beginPath();cx.roundRect(950,470,85,52,5);cx.fill();cx.stroke();cx.fillStyle='#8af0b8';cx.fillRect(966,485,52,4);cx.fillRect(966,495,35,3);cx.restore();
- drawConsole(920,560,58,30);drawConsole(1050,560,58,30);
- // Electrical cabinets and fuse banks
- for(var i=0;i<4;i++){drawConsole(510+i*43,500,34,54,'#e8bd62');drawConsole(510+i*43,630,34,42,'#e8bd62')}
- // Storage grid and crates
- [[710,575,48],[790,575,48],[870,575,48],[710,720,48],[870,720,48],[790,760,42]].forEach(function(p){drawCrate(p[0],p[1],p[2])});
- // Communications desk and monitor
- drawConsole(945,690,88,38,'#75e5d1');drawConsole(1030,760,60,36,'#75e5d1');
- // Shields: shield emitter ring and control stations
- cx.save();cx.strokeStyle='#70d7d8';cx.lineWidth=7;cx.shadowColor='#54dbe8';cx.shadowBlur=17;cx.beginPath();cx.arc(1170,650,47,0,Math.PI*2);cx.stroke();cx.shadowBlur=0;cx.fillStyle='#315b68';cx.beginPath();cx.arc(1170,650,25,0,Math.PI*2);cx.fill();cx.strokeStyle='#c1e7d9';cx.lineWidth=3;cx.stroke();cx.restore();drawConsole(1120,590,54,34);drawConsole(1215,700,54,34);
+ // WEST WING — engine rooms, reactor, security and medical.
+ drawEngine(255,205);drawConsole(235,265,58,28,'#e8b96c');
+ drawEngine(255,625);drawConsole(235,670,58,28,'#e8b96c');
+ drawReactor(90,420);
+ REACTOR_PANELS.forEach(function(v){drawConsole(v[0],v[1],34,26,'#8be4d8')});
+ drawConsole(360,405,48,28,'#80e0d4');
+ // Security camera monitor bank.
+ cx.save();cx.fillStyle='#263e45';cx.strokeStyle='#c0d2ca';cx.lineWidth=3;
+ cx.beginPath();cx.roundRect(330,350,62,24,5);cx.fill();cx.stroke();
+ for(var m=0;m<4;m++){cx.fillStyle=['#5d9f9a','#6288a6','#6c9d87','#8f9d72'][m];cx.fillRect(336+m*13,355,10,12)}
+ cx.restore();
+ // MedBay beds and scanner.
+ drawBed(492,325);drawBed(555,325);drawConsole(535,408,68,28,'#8ce4d8');
+ cx.save();cx.strokeStyle='#9fe8e0';cx.lineWidth=4;cx.shadowColor='#7cefe2';cx.shadowBlur=10;
+ cx.beginPath();cx.ellipse(535,375,42,21,0,0,Math.PI*2);cx.stroke();cx.restore();
+ // Cafeteria dining tables and central emergency table.
+ [[740,125],[890,125],[740,295],[890,295]].forEach(function(p){drawTable(p[0],p[1],38,26)});
+ // Weapons cannon.
+ cx.save();cx.translate(1115,180);cx.shadowColor='#000b';cx.shadowBlur=10;cx.fillStyle='#405a67';cx.strokeStyle='#c1d1c8';cx.lineWidth=4;
+ cx.beginPath();cx.roundRect(-52,-34,104,68,13);cx.fill();cx.stroke();
+ cx.fillStyle='#1a3547';cx.beginPath();cx.arc(0,0,23,0,7);cx.fill();
+ cx.strokeStyle='#80d8df';cx.lineWidth=4;cx.beginPath();cx.arc(0,0,14,0,7);cx.stroke();cx.restore();
+ // O2 life support.
+ O2_PANELS.forEach(function(v){drawConsole(v[0],v[1],34,24,'#76dfce')});
+ // Navigation consoles.
+ drawConsole(1345,360,64,32,'#72e4d7');drawConsole(1390,425,56,30,'#72e4d7');drawConsole(1320,445,46,24);
+ // Admin map terminal and card reader.
+ cx.save();cx.shadowColor='#000a';cx.shadowBlur=9;cx.fillStyle='#635847';cx.strokeStyle='#c7b7ae';cx.lineWidth=4;
+ cx.beginPath();cx.roundRect(875,465,100,70,9);cx.fill();cx.stroke();cx.shadowBlur=0;
+ cx.fillStyle='#174d48';cx.strokeStyle='#78d6a6';cx.lineWidth=3;cx.beginPath();cx.roundRect(891,478,68,44,5);cx.fill();cx.stroke();
+ cx.fillStyle='#8af0b8';cx.fillRect(902,490,44,3);cx.fillRect(902,498,30,3);cx.restore();
+ drawConsole(890,565,40,22);drawConsole(970,565,40,22);
+ // Electrical breaker banks.
+ for(var i=0;i<4;i++){drawConsole(480+i*40,520,26,40,'#e8bd62');drawConsole(480+i*40,625,26,34,'#e8bd62')}
+ // Storage cargo crates, keeping the middle traffic lane open.
+ [[660,590,40],[750,590,40],[800,590,36],[660,705,40],[800,705,36],[740,770,38]].forEach(function(p){drawCrate(p[0],p[1],p[2])});
+ // Communications terminal.
+ drawConsole(950,755,54,26,'#75e5d1');
+ cx.save();cx.strokeStyle='#8ccbc0';cx.lineWidth=3;cx.beginPath();cx.moveTo(985,742);cx.lineTo(1005,712);cx.lineTo(1014,712);cx.stroke();cx.beginPath();cx.arc(1014,712,4,0,Math.PI*2);cx.fillStyle='#73ded0';cx.fill();cx.restore();
+ // Shields generator and adjacent control panels.
+ cx.save();cx.strokeStyle='#70d7d8';cx.lineWidth=6;cx.shadowColor='#54dbe8';cx.shadowBlur=12;
+ cx.beginPath();cx.arc(1127,650,36,0,Math.PI*2);cx.stroke();cx.shadowBlur=0;
+ cx.fillStyle='#315b68';cx.beginPath();cx.arc(1127,650,19,0,Math.PI*2);cx.fill();
+ cx.strokeStyle='#c1e7d9';cx.lineWidth=3;cx.stroke();cx.restore();
+ drawConsole(1090,610,42,24);drawConsole(1160,700,42,24);
 }
 var DOORWAYS=MAPDATA.DOORWAYS;
 var OCCLUDERS=null;
@@ -1374,48 +1419,64 @@ function drawDoors(){
  DOORWAYS.forEach(function(a){drawDoor(a[0],a[1],a[2],a[3],a[4])});
 }
 function drawRoomWalls(){
- // One clean, solid wall profile. The former 24/17/10/2px nested strokes
- // produced the ugly multi-rail/grate look and visually inflated every room.
- var walls=buildOccluders().slice(0,buildOccluders().length-BLOCKERS.length*4);
- cx.save();cx.lineCap='butt';cx.lineJoin='round';
- cx.shadowColor='rgba(0,0,0,.28)';cx.shadowBlur=4;cx.shadowOffsetY=2;
- cx.strokeStyle='#263437';cx.lineWidth=15;
- walls.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke()});
+ // Source-traced interior wall paths, rendered once to avoid the former
+ // stacked decorative rails. Door leaves are drawn separately.
+ cx.save();cx.lineCap='square';cx.lineJoin='miter';
+ cx.shadowColor='rgba(0,0,0,.24)';cx.shadowBlur=4;cx.shadowOffsetY=2;
+ cx.strokeStyle='#263538';cx.lineWidth=10;
+ MAPDATA.WALLS.slice(1).forEach(function(poly){
+  if(!poly||poly.length<2)return;
+  cx.beginPath();cx.moveTo(poly[0][0],poly[0][1]);
+  for(var i=1;i<poly.length;i++)cx.lineTo(poly[i][0],poly[i][1]);
+  cx.closePath();cx.stroke();
+ });
  cx.restore();
 }
+function drawCamera(v){
+ cx.save();cx.translate(v.x,v.y);cx.rotate(v.angle||0);
+ cx.shadowColor='#0008';cx.shadowBlur=5;cx.fillStyle='#35464a';cx.strokeStyle='#c5d3ce';cx.lineWidth=2;
+ cx.beginPath();cx.roundRect(-10,-6,20,12,4);cx.fill();cx.stroke();cx.shadowBlur=0;
+ cx.fillStyle='#8fd8e2';cx.beginPath();cx.arc(3,0,3,0,Math.PI*2);cx.fill();cx.restore();
+}
 function drawSkeld(){
- cx.save();cx.fillStyle='#172126';cx.fillRect(0,0,W,H);
- // Muted steel hull rim, closer to the original game's flat overhead look.
- cx.save();cx.fillStyle='#697875';cx.strokeStyle='#c2c9c1';cx.lineWidth=18;
- cx.beginPath();cx.moveTo(55,245);cx.lineTo(150,115);cx.lineTo(280,45);cx.lineTo(625,15);cx.lineTo(960,15);cx.lineTo(1100,70);cx.lineTo(1220,180);cx.lineTo(1395,260);cx.lineTo(1435,345);cx.lineTo(1435,455);cx.lineTo(1370,555);cx.lineTo(1240,710);cx.lineTo(1190,790);cx.lineTo(1040,850);cx.lineTo(390,850);cx.lineTo(235,790);cx.lineTo(120,680);cx.lineTo(35,510);cx.lineTo(12,390);cx.closePath();cx.fill();cx.stroke();cx.restore();
- // Corridor deck, then room decks
- HALLS.forEach(function(p){var fake={c:'#71888b',kind:'hall'};floorTexture(p,fake)});
+ cx.save();cx.fillStyle='#0d1720';cx.fillRect(0,0,W,H);
+ // Hull silhouette from the measured overview. The floor plates sit inside it.
+ polyPath(MAPDATA.HULL);cx.save();cx.shadowColor='#000b';cx.shadowBlur=16;
+ cx.fillStyle='#52615e';cx.fill();cx.strokeStyle='#788780';cx.lineWidth=9;cx.stroke();cx.restore();
+ HALLS.forEach(function(p){floorTexture(p,{n:'Hallway',kind:'hall'})});
  FLOORS.forEach(function(r){floorTexture(r.p,r)});
- // Clean map edges: omit the thick outlined wall rails.
- // Leave doorways visibly open; the old decorative crossbars looked like floor grates.
- // Window strips along corridor edges
- [[420,170,190],[440,225,160],[650,350,45],[990,195,55],[1120,365,125],[710,650,170],[960,770,80]].forEach(function(a){
-  cx.fillStyle='#29444e';cx.strokeStyle='#a5c0bc';cx.lineWidth=3;cx.beginPath();cx.roundRect(a[0],a[1],a[2],14,3);cx.fill();cx.stroke();
-  for(var i=0;i<Math.floor(a[2]/18);i++){cx.fillStyle=i%2?'#4d8794':'#78aab0';cx.fillRect(a[0]+5+i*18,a[1]+3,13,8)}
- });
  drawRoomWalls();
  drawFurniture();
+ // Real doors only: leave their openings visually clear unless sabotaged.
  drawDoors();
  if(C.sabotage&&C.sabotage.type==='doors'&&C.sabotage.until>Date.now()){
-  (C.sabotage.doors||[]).forEach(function(i){var d=DOORWAYS[i];if(!d)return;cx.save();cx.fillStyle='#33424b';cx.strokeStyle='#d4e2dc';cx.lineWidth=4;cx.shadowColor='#000';cx.shadowBlur=8;cx.beginPath();cx.roundRect(d[0],d[1],d[2],d[3],4);cx.fill();cx.stroke();cx.restore()});
+  (C.sabotage.doors||[]).forEach(function(i){var d=DOORWAYS[i];if(!d)return;cx.save();cx.fillStyle='#33424b';cx.strokeStyle='#d4e2dc';cx.lineWidth=3;cx.shadowColor='#000';cx.shadowBlur=5;cx.beginPath();cx.roundRect(d[0],d[1],d[2],d[3],3);cx.fill();cx.stroke();cx.restore()});
  }
- // Room vents (14) sit flush with the deck.
- VENTS.forEach(function(v){cx.save();cx.shadowColor='#9d8bf2';cx.shadowBlur=8;cx.fillStyle='#18272e';cx.strokeStyle='#b5a6e8';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-17,v[1]-10,34,20,5);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#aebcc0';cx.lineWidth=2;for(var z=-9;z<=9;z+=6){cx.beginPath();cx.moveTo(v[0]+z,v[1]-6);cx.lineTo(v[0]+z,v[1]+6);cx.stroke()}cx.restore()});
- // Task interaction markers are small glowing station lamps, not floating labels.
- ST.forEach(function(v,i){var mine=C.tasks.indexOf(i)>-1,dn=C.mine[i],loc=mine&&!dn?taskLocation(i,C.stages&&C.stages[i]||0):v,pulse=.5+.5*Math.sin(Date.now()*.004+i);cx.save();cx.shadowColor=mine?(dn?'#4ade80':'#ffd166'):'#5e8b9b';cx.shadowBlur=mine?12+6*pulse:4;cx.fillStyle=mine?(dn?'#1e684b':'#9b6d24'):'#29434a';cx.strokeStyle=mine?(dn?'#72f2a2':'#ffe29a'):'#b4c8c0';cx.lineWidth=2;cx.beginPath();cx.roundRect(loc[0]-12,loc[1]-10,24,20,4);cx.fill();cx.stroke();cx.fillStyle='#eafff8';cx.font='bold 11px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(dn?'✓':(mine?'!':'•'),loc[0],loc[1]);cx.restore()});
- // Cafeteria emergency table
- drawTable(TBL[0],TBL[1],32,22);
- // Lights sabotage panels in Electrical
- PANELS.forEach(function(v){drawConsole(v[0],v[1],36,42,'#8ee7d7')});
+ // Vents are low-profile floor panels and use the correct connected networks.
+ VENTS.forEach(function(v){
+  cx.save();cx.fillStyle='#14242a';cx.strokeStyle='#b5a6e8';cx.lineWidth=2.2;cx.shadowColor='#9d8bf2';cx.shadowBlur=5;
+  cx.beginPath();cx.roundRect(v[0]-13,v[1]-7,26,14,3);cx.fill();cx.stroke();cx.shadowBlur=0;
+  cx.strokeStyle='#aebcc0';cx.lineWidth=1.2;
+  for(var z=-7;z<=7;z+=5){cx.beginPath();cx.moveTo(v[0]+z,v[1]-4);cx.lineTo(v[0]+z,v[1]+4);cx.stroke()}
+  cx.restore();
+ });
+ CAMERAS.forEach(drawCamera);
+ // Task markers are shown only for this player's assigned unfinished tasks.
+ ST.forEach(function(v,i){
+  if(!v||C.tasks.indexOf(i)===-1)return;
+  var done=!!C.mine[i],loc=!done?taskLocation(i,C.stages&&C.stages[i]||0):v;
+  if(!loc)return;
+  var pulse=.5+.5*Math.sin(Date.now()*.004+i);
+  cx.save();cx.shadowColor=done?'#4ade80':'#ffd166';cx.shadowBlur=done?6:8+4*pulse;
+  cx.fillStyle=done?'#1e684b':'#9b6d24';cx.strokeStyle=done?'#72f2a2':'#ffe29a';cx.lineWidth=1.5;
+  cx.beginPath();cx.arc(loc[0],loc[1]-16,4.5,0,Math.PI*2);cx.fill();cx.stroke();cx.restore();
+ });
+ // Cafeteria meeting table, sabotage repair panels, bodies and players.
+ drawTable(TBL[0],TBL[1],30,21);
+ PANELS.forEach(function(v){drawConsole(v[0],v[1],34,38,'#8ee7d7')});
  C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
- if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=7;cx.shadowColor='#ff1744';cx.shadowBlur=20;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
+ if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=7;cx.shadowColor='#ff1744';cx.shadowBlur=18;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
  Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#f7ffff';cx.font='bold 16px Arial';cx.textAlign='center';cx.strokeStyle='#17262b';cx.lineWidth=4;cx.strokeText(P[k].name,q.x,q.y-23);cx.fillText(P[k].name,q.x,q.y-23)});
- // No foreground polygon outlines; keep the floor unobstructed.
  cx.restore();
 }
 function drawVision(p){
@@ -1425,7 +1486,7 @@ function drawVision(p){
  return;
 }
 function drawMinimap(){
- var mw=Math.min(250,Math.max(190,innerWidth*.27))*DPR,mh=mw*.60,pad=12*DPR,x=cv.width-mw-pad,y=82*DPR;
+ var mw=Math.min(250,Math.max(190,innerWidth*.27))*DPR,mh=mw*.55,pad=12*DPR,x=cv.width-mw-pad,y=82*DPR;
  cx.save();cx.setTransform(1,0,0,1,0,0);cx.shadowColor='#000';cx.shadowBlur=18*DPR;cx.fillStyle='rgba(3,9,18,.96)';cx.strokeStyle='rgba(190,224,235,.92)';cx.lineWidth=1.5*DPR;cx.beginPath();cx.roundRect(x,y,mw,mh,10*DPR);cx.fill();cx.stroke();
  var ox=x+7*DPR,oy=y+7*DPR,iw=mw-14*DPR,ih=mh-14*DPR,sx=iw/W,sy=ih/H;
  cx.save();cx.beginPath();cx.roundRect(ox,oy,iw,ih,5*DPR);cx.clip();cx.fillStyle='#050a12';cx.fillRect(ox,oy,iw,ih);cx.translate(ox,oy);cx.scale(sx,sy);
