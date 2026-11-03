@@ -348,19 +348,25 @@ var HALLS=[
  [[465,425],[535,425],[535,510],[465,510]],
  [[370,600],[485,600],[485,670],[370,670]]
 ];
-var ST=[[205,300],[235,265],[575,425],[570,560],[1050,520],[1170,655]];
+var ST=[[150,400],[300,205],[565,345],[565,565],[985,500],[1170,660]];
 var TBL=[820,205];
 var TASK_NAMES=['REACTOR','UPPER ENGINE','MEDBAY','ELECTRICAL','ADMIN','SHIELDS'];
 var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
 var PANELS=[[535,545],[620,600]];
 // Furniture collision rectangles are in the same world coordinates as the map.
 var BLOCKERS=[
+ // Cafeteria tables, leaving a generous ring around the emergency table.
  [700,100,82,55],[860,100,82,55],[775,185,82,55],[700,270,82,55],[860,270,82,55],
+ // MedBay beds and Security console.
  [520,285,42,90],[610,285,42,90],[545,365,90,28],
+ // Admin, Weapons, Navigation and Reactor equipment.
  [950,465,85,64],[1080,145,120,80],[1320,340,75,70],[112,340,76,110],
+ // Electrical cabinets and cable banks.
  [500,490,44,40],[600,490,44,40],[500,595,44,40],[600,595,44,40],
+ // Storage crates, Communications consoles and Shields machinery.
  [720,600,62,58],[835,600,62,58],[720,710,62,58],[835,710,62,58],
  [930,680,65,40],[1015,690,65,40],[1125,585,60,42],[1190,650,42,52],
+ // Engine housings.
  [250,150,65,48],[300,555,65,48]
 ];
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -966,10 +972,86 @@ function floorTexture(poly,room){
  }
  cx.restore();
 }
+
+// --- The Skeld interior set -------------------------------------------------
+// Furniture is drawn from the same coordinates as BLOCKERS so the visual and
+// collision layers stay aligned.  No decorative rail/grate outlines are used.
+function propBox(x,y,w,h,base,light){
+ cx.save();
+ cx.fillStyle='rgba(0,0,0,.22)';cx.beginPath();cx.roundRect(x+3,y+5,w,h,Math.min(12,h/3));cx.fill();
+ var g=cx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,light);g.addColorStop(.42,base);g.addColorStop(1,shade(base,-25));
+ cx.fillStyle=g;cx.beginPath();cx.roundRect(x,y,w,h,Math.min(12,h/3));cx.fill();
+ cx.fillStyle='rgba(255,255,255,.18)';cx.beginPath();cx.roundRect(x+5,y+4,Math.max(3,w-10),3,2);cx.fill();
+ cx.restore();
+}
+function drawTable(x,y,rx,ry){
+ cx.save();
+ cx.fillStyle='rgba(0,0,0,.25)';cx.beginPath();cx.ellipse(x+2,y+5,rx+3,ry+3,0,0,Math.PI*2);cx.fill();
+ cx.fillStyle='#6d7774';cx.beginPath();cx.ellipse(x,y+3,rx*.56,ry*.55,0,0,Math.PI*2);cx.fill();
+ var g=cx.createLinearGradient(x-rx,y-ry,x+rx,y+ry);g.addColorStop(0,'#e3e0d5');g.addColorStop(.55,'#b7b7ad');g.addColorStop(1,'#858d89');
+ cx.fillStyle=g;cx.beginPath();cx.ellipse(x,y,rx,ry,0,0,Math.PI*2);cx.fill();
+ cx.fillStyle='rgba(255,255,255,.24)';cx.beginPath();cx.ellipse(x-rx*.2,y-ry*.28,rx*.48,ry*.22,-.18,0,Math.PI*2);cx.fill();
+ cx.fillStyle='#d94d4d';cx.beginPath();cx.arc(x,y,Math.min(rx,ry)*.24,0,Math.PI*2);cx.fill();
+ cx.fillStyle='#f4c8a7';cx.beginPath();cx.arc(x,y,Math.min(rx,ry)*.11,0,Math.PI*2);cx.fill();
+ cx.restore();
+}
+function drawConsole(x,y,w,h,accent){
+ cx.save();
+ propBox(x,y,w,h,'#344d56','#617a7d');
+ cx.fillStyle='#142a32';cx.beginPath();cx.roundRect(x+5,y+6,w-10,h-12,5);cx.fill();
+ cx.fillStyle=accent||'#7bd8c8';cx.shadowColor=accent||'#7bd8c8';cx.shadowBlur=7;
+ cx.fillRect(x+10,y+11,Math.max(4,w-20),4);cx.shadowBlur=0;
+ for(var i=0;i<3;i++){cx.fillStyle=['#e7bd69','#74d6b4','#e57e7e'][i];cx.beginPath();cx.arc(x+12+i*9,y+h-11,2.2,0,Math.PI*2);cx.fill()}
+ cx.restore();
+}
+function drawFurniture(){
+ // Cafeteria: five circular tables, with the emergency button on the centre one.
+ [[741,127],[899,127],[820,205],[741,283],[899,283]].forEach(function(p,i){drawTable(p[0],p[1],i===2?34:28,i===2?22:19)});
+ // Engines: large rounded machinery housings and illuminated turbine cores.
+ [[250,150],[300,555]].forEach(function(p){
+  propBox(p[0],p[1],65,48,'#52666a','#91a2a0');
+  cx.save();cx.fillStyle='#263d42';cx.beginPath();cx.ellipse(p[0]+32,p[1]+24,20,15,0,0,Math.PI*2);cx.fill();
+  cx.strokeStyle='#b7c8c2';cx.lineWidth=3;for(var a=0;a<8;a++){var ang=a*Math.PI/4;cx.beginPath();cx.moveTo(p[0]+32+Math.cos(ang)*6,p[1]+24+Math.sin(ang)*5);cx.lineTo(p[0]+32+Math.cos(ang)*16,p[1]+24+Math.sin(ang)*11);cx.stroke()}
+  cx.fillStyle='#7fd4cb';cx.beginPath();cx.arc(p[0]+32,p[1]+24,5,0,Math.PI*2);cx.fill();cx.restore();
+ });
+ // Reactor core and hand scanners.
+ propBox(112,340,76,110,'#596366','#899492');
+ cx.save();cx.fillStyle='#25373c';cx.beginPath();cx.roundRect(123,350,54,90,15);cx.fill();
+ cx.fillStyle='#d2a65d';cx.fillRect(130,358,40,5);cx.fillStyle='#8fd5ce';cx.fillRect(130,425,40,5);
+ for(var j=0;j<3;j++){cx.fillStyle='#b9c9c4';cx.beginPath();cx.arc(150,374+j*23,7,0,Math.PI*2);cx.fill()}cx.restore();
+ // Security desk and MedBay beds.
+ propBox(545,365,90,28,'#536a70','#82999a');
+ drawConsole(520,285,42,90,'#7dc9e1');drawConsole(610,285,42,90,'#7dc9e1');
+ // Admin table and its monitor.
+ propBox(950,465,85,64,'#596e69','#8ea49a');
+ drawConsole(970,476,43,25,'#83e3cb');
+ // Weapons turret and Navigation pilot console.
+ propBox(1080,145,120,80,'#536b72','#8ea5a8');
+ cx.save();cx.fillStyle='#263f49';cx.beginPath();cx.ellipse(1140,185,35,28,0,0,Math.PI*2);cx.fill();
+ cx.fillStyle='#8aa6aa';cx.beginPath();cx.ellipse(1140,185,22,17,0,0,Math.PI*2);cx.fill();
+ cx.fillStyle='#354d57';cx.fillRect(1155,178,38,14);cx.fillStyle='#9ce3e2';cx.fillRect(1183,181,11,8);cx.restore();
+ propBox(1320,340,75,70,'#526d73','#91a9a9');drawConsole(1331,351,53,46,'#83e6e1');
+ // Electrical: four equipment banks with exposed cable runs.
+ [[500,490],[600,490],[500,595],[600,595]].forEach(function(p,i){
+  propBox(p[0],p[1],44,40,'#4a5e59','#84938a');
+  cx.save();cx.fillStyle='#1b2b2c';cx.fillRect(p[0]+7,p[1]+8,30,24);
+  for(var k=0;k<3;k++){cx.strokeStyle=['#c79a50','#5eb5a4','#c56e6e'][k];cx.lineWidth=3;cx.beginPath();cx.moveTo(p[0]+10,p[1]+13+k*7);cx.lineTo(p[0]+34,p[1]+13+k*7);cx.stroke()}cx.restore();
+ });
+ // Storage crates in staggered rows; collision rectangles match their footprint.
+ [[720,600],[835,600],[720,710],[835,710]].forEach(function(p,i){
+  propBox(p[0],p[1],62,58,'#81775d','#b1a17a');
+  cx.save();cx.strokeStyle='rgba(35,43,38,.32)';cx.lineWidth=3;cx.beginPath();cx.moveTo(p[0]+10,p[1]+10);cx.lineTo(p[0]+52,p[1]+48);cx.moveTo(p[0]+52,p[1]+10);cx.lineTo(p[0]+10,p[1]+48);cx.stroke();cx.restore();
+ });
+ // Communications consoles.
+ drawConsole(930,680,65,40,'#79d8c7');drawConsole(1015,690,65,40,'#79d8c7');
+ // Shields: generator banks and the lower-right power node.
+ propBox(1125,585,60,42,'#566f70','#92aaa1');drawConsole(1190,650,42,52,'#80e4d4');
+}
+
 function drawSkeld(){
  cx.save();cx.fillStyle='#172126';cx.fillRect(0,0,W,H);
- // Muted steel hull rim, closer to the original game's flat overhead look.
- cx.save();cx.fillStyle='#697875';
+ // Ship hull and deck base; the playable deck is kept visually open.
+ cx.save();cx.fillStyle='#53636a';
  cx.beginPath();cx.moveTo(55,245);cx.lineTo(150,115);cx.lineTo(280,45);cx.lineTo(625,15);cx.lineTo(960,15);cx.lineTo(1100,70);cx.lineTo(1220,180);cx.lineTo(1395,260);cx.lineTo(1435,345);cx.lineTo(1435,455);cx.lineTo(1370,555);cx.lineTo(1240,710);cx.lineTo(1190,790);cx.lineTo(1040,850);cx.lineTo(390,850);cx.lineTo(235,790);cx.lineTo(120,680);cx.lineTo(35,510);cx.lineTo(12,390);cx.closePath();cx.fill();cx.restore();
  // Corridor deck, then room decks
  HALLS.forEach(function(p){var fake={c:'#71888b',kind:'hall'};floorTexture(p,fake)});
