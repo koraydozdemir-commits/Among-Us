@@ -356,7 +356,7 @@ var HALLS=[
  [[370,600],[485,600],[485,670],[370,670]]
 ];
 var ST=[[150,395],[230,265],[580,410],[570,560],[990,510],[1170,650],[1140,185],[1345,400],[190,455],[575,500],[690,110],[1050,360],[800,730],[1370,445],[585,620],[570,510],[885,330],[610,415]];
-var POWER_TARGETS=[[1020,780],[1050,550],[1170,650],[1345,400],[295,265],[580,410],[1050,360]];
+var POWER_TARGETS=[[1020,780],[1050,550],[1170,650],[1345,455],[295,265],[580,410],[1050,360]],POWER_TARGET_NAMES=['COMMUNICATIONS','ADMIN','SHIELDS','NAVIGATION','UPPER ENGINE','MEDBAY','O2'];
 var TBL=[820,205];
 var TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE','CLEAN VENT','DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
 var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
@@ -1117,13 +1117,14 @@ function cleanVentTask(){
  wrap.appendChild(vent);$('taskarea').appendChild(wrap);
 }
 function divertPowerTask(){
- taskPanelTitle('DIVERT POWER','Route power from Electrical, then accept the diverted power.');
+ var target=C.powerTarget||POWER_TARGETS[0],chosen=POWER_TARGETS.findIndex(function(v){return v[0]===target[0]&&v[1]===target[1]});if(chosen<0)chosen=0;
+ var targetName=POWER_TARGET_NAMES[chosen];
+ taskPanelTitle('DIVERT POWER · 1/2','Move the power switch to '+targetName+'. Then travel there and accept the power.');
  var wrap=document.createElement('div');wrap.className='divert-task';
  var banks=document.createElement('div');banks.className='divert-banks';
- var labels=['COMMS','ENGINES','SHIELDS','O2','NAV','ADMIN','MEDBAY','SECURITY'];var chosen=Math.floor(Math.random()*labels.length);
- labels.forEach(function(label,i){var b=document.createElement('button');b.className='divert-bank';b.textContent=label;b.onclick=function(){if(banks.dataset.chosen)return;banks.dataset.chosen=String(i);b.classList.add('selected');desc.textContent='POWER ROUTED · '+label};banks.appendChild(b)});
- var desc=document.createElement('div');desc.className='engine-readout';desc.textContent='SELECT A CIRCUIT';
- var lever=document.createElement('button');lever.className='tasktile';lever.textContent='DIVERT POWER';lever.onclick=function(){if(!banks.dataset.chosen){$('taskstatus').textContent='SELECT A CIRCUIT FIRST';return}lever.textContent='POWER DIVERTED';lever.disabled=true;var accept=document.createElement('button');accept.className='tasktile';accept.textContent='ACCEPT POWER';accept.onclick=finishTask;wrap.appendChild(accept)};
+ var labels=POWER_TARGET_NAMES.slice(),desc=document.createElement('div');desc.className='engine-readout';desc.textContent='TARGET CIRCUIT · '+targetName;
+ labels.forEach(function(label,i){var b=document.createElement('button');b.className='divert-bank';b.textContent=label;b.onclick=function(){if(banks.dataset.chosen)return;if(i!==chosen){$('taskstatus').textContent='INCORRECT CIRCUIT · FOLLOW THE TARGET INDICATOR';return}banks.dataset.chosen=String(i);b.classList.add('selected');desc.textContent='POWER ROUTED · '+label};banks.appendChild(b)});
+ var lever=document.createElement('button');lever.className='tasktile';lever.textContent='DIVERT POWER';lever.onclick=function(){if(!banks.dataset.chosen){$('taskstatus').textContent='SELECT THE MARKED CIRCUIT FIRST';return}lever.textContent='POWER DIVERTED';lever.disabled=true};
  wrap.append(banks,desc,lever);$('taskarea').appendChild(wrap);
 }
 function emptyGarbageTask(){
