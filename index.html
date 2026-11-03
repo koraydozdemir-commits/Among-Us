@@ -96,7 +96,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
  <div class="lobby-heading"><span class="eyebrow">YOUR CREW IS ASSEMBLING</span><h2>WAITING ROOM</h2><p>Invite your friends with this room code</p></div>
  <div class="code-panel"><div class="code-caption">YOUR JOIN CODE</div><div id="code"></div><button id="copycode" class="copy-action" type="button">COPY CODE <span>▣</span></button><div id="lobbyconnect" class="lobby-connect" style="min-height:18px;color:#a9c7e8;font-size:13px"></div></div>
  <section class="players-panel"><div class="panel-heading"><span>CREW MANIFEST</span><span id="playercount">01 / 10</span></div><div class="pl" id="plist"></div><div id="lmsg" style="color:#9aa"></div></section>
- <section id="roomsettings" style="display:none;width:min(560px,100%);padding:18px;border:1px solid #28364d;border-radius:18px;background:#101a2b;text-align:left"><h3>ROOM SETTINGS <small>HOST ONLY</small></h3><div class="settinggrid"><label>Impostors<select id="cfgImps"><option value="1">1</option><option value="2">2</option></select></label><label>Speed<select id="cfgSpeed"><option value=".8">Slow</option><option value="1" selected>Normal</option><option value="1.25">Fast</option><option value="1.5">Very fast</option></select></label><label>Kill cooldown<select id="cfgCooldown"><option value="8000">8 sec</option><option value="12000" selected>12 sec</option><option value="18000">18 sec</option><option value="25000">25 sec</option></select></label><label>Tasks per crewmate<select id="cfgTasks"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label></div></section><button id="start" hidden>START MISSION <span>→</span></button>
+ <section id="roomsettings" style="display:none;width:min(560px,100%);padding:18px;border:1px solid #28364d;border-radius:18px;background:#101a2b;text-align:left"><h3>ROOM SETTINGS <small>HOST ONLY</small></h3><div class="settinggrid"><label>Impostors<select id="cfgImps"><option value="1">1</option><option value="2">2</option></select></label><label>Speed<select id="cfgSpeed"><option value=".8">Slow</option><option value="1" selected>Normal</option><option value="1.25">Fast</option><option value="1.5">Very fast</option></select></label><label>Kill cooldown<select id="cfgCooldown"><option value="8000">8 sec</option><option value="12000" selected>12 sec</option><option value="18000">18 sec</option><option value="25000">25 sec</option></select></label><label>Tasks per crewmate<select id="cfgTasks"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label><label>Crew vision<select id="cfgVision"><option value=".65">Narrow</option><option value="1" selected>Normal</option><option value="1.35">Wide</option></select></label></div></section><button id="start" hidden>START MISSION <span>→</span></button>
 </div>
 <div class="scr" id="vote" hidden><h2 id="vt" style="margin:0"></h2><div id="vopts" class="row" style="max-width:640px"></div><div id="vtime"></div></div>
 <div class="scr" id="end" hidden><h1 id="et"></h1><div id="es" style="color:#9aa"></div><button id="again" hidden>Back to lobby</button></div>
@@ -116,7 +116,7 @@ var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 var isHost=false,peer,conns={},hostConn,me='me',connectTimer=null,connectBusy=false;
 var playerColor=COL[0],playerHat='none';
-var roomCfg={imps:1,speed:1,cooldown:12000,tasks:3};
+var roomCfg={imps:1,speed:1,cooldown:12000,tasks:3,vision:1};
 var P={};            // id -> {name,col}
 var C={phase:'home',pos:{},bodies:[],done:0,total:0,role:'',tasks:[],mine:{},meet:null};
 var HS=null;         // host sim state
@@ -137,9 +137,9 @@ function beginConnect(message,ms,fail){
  stopConnectTimer();connectTimer=setTimeout(function(){if(connectBusy)resetConnection(fail)},ms);
 }
 function readRoomCfg(){
- roomCfg={imps:Number($('cfgImps').value)||1,speed:Number($('cfgSpeed').value)||1,cooldown:Number($('cfgCooldown').value)||12000,tasks:Number($('cfgTasks').value)||3};
+ roomCfg={imps:Number($('cfgImps').value)||1,speed:Number($('cfgSpeed').value)||1,cooldown:Number($('cfgCooldown').value)||12000,tasks:Number($('cfgTasks').value)||3,vision:Number($('cfgVision').value)||1};
 }
-['cfgImps','cfgSpeed','cfgCooldown','cfgTasks'].forEach(function(id){$(id).addEventListener('change',function(){readRoomCfg();if(isHost)bcast({t:'lobby',P:P,cfg:roomCfg})})});
+['cfgImps','cfgSpeed','cfgCooldown','cfgTasks','cfgVision'].forEach(function(id){$(id).addEventListener('change',function(){readRoomCfg();if(isHost)bcast({t:'lobby',P:P,cfg:roomCfg})})});
 
 /* ---------- networking: host-authoritative PeerJS ---------- */
 function toHost(m){
@@ -377,7 +377,7 @@ function onMsg(m){
  else if(m.t==='role'){P=m.P;C.role=m.role;C.tasks=m.tasks;C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
   killAt=Date.now()+(m.cooldown||12000);show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
   $('role').style.color=m.role==='imp'?'#fb7185':'#8fe3ff';taskUI()}
- else if(m.t==='st'){C.pos={};m.p.forEach(function(a){C.pos[a[0]]={x:a[1],y:a[2],al:a[3]}});C.bodies=m.b;C.done=m.dn;$('bar').firstChild.style.width=(C.total?m.dn/C.total*100:0)+'%'}
+ else if(m.t==='st'){C.pos={};m.p.forEach(function(a){C.pos[a[0]]={x:a[1],y:a[2],al:a[3]}});C.bodies=m.b;C.done=m.dn;$('bar').firstChild.style.width=(C.total?m.dn/C.total*100:0)+'%';if(C.role==='crew'&&C.pos[me]&&!C.pos[me].al){$('role').textContent='GHOST · CREW';$('role').style.color='#a5b4fc'}}
  else if(m.t==='td'){C.mine[m.id]=1;taskUI()}
  else if(m.t==='cd'){killAt=m.until||Date.now()+12000}
  else if(m.t==='ventcd'){ventAt=m.until||Date.now()+6500}
@@ -398,7 +398,7 @@ function onMsg(m){
 function showFx(label,color){var e=$('fx');e.textContent=label;e.style.color=color;e.style.display='flex';clearTimeout(e._t);e._t=setTimeout(function(){e.style.display='none'},850)}
 function lobbyUI(){
  var ids=Object.keys(P);$('playercount').textContent=String(ids.length).padStart(2,'0')+' / 10';$('roomsettings').style.display=isHost?'block':'none';
- if(isHost){$('cfgImps').value=String(roomCfg.imps);$('cfgSpeed').value=String(roomCfg.speed);$('cfgCooldown').value=String(roomCfg.cooldown);$('cfgTasks').value=String(roomCfg.tasks)}
+ if(isHost){$('cfgImps').value=String(roomCfg.imps);$('cfgSpeed').value=String(roomCfg.speed);$('cfgCooldown').value=String(roomCfg.cooldown);$('cfgTasks').value=String(roomCfg.tasks);$('cfgVision').value=String(roomCfg.vision||1)}
  $('plist').innerHTML=ids.map(function(k){var p=P[k];return'<span class="player-chip"><i style="background:'+p.col+';color:'+p.col+'"></i>'+esc(p.name)+(k===me?' <small>(YOU)</small>':'')+(isHost&&k!==me?' <button class="kick-player" data-kick="'+esc(k)+'">KICK</button>':'')+'</span>'}).join('');
  $('start').hidden=!isHost;$('start').disabled=connectBusy||ids.length<3||roomCfg.imps>=ids.length;
  $('lmsg').textContent=ids.length+' player'+(ids.length>1?'s':'')+(ids.length<3?' (need 3+)':'')+(isHost?'':' - waiting for host')+(roomCfg.imps>=ids.length?' · reduce impostors to start':'');
@@ -542,7 +542,7 @@ function frame(){
  Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;
   cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#fff';cx.font='bold 13px Arial';cx.textAlign='center';cx.fillText(P[k].name,q.x,q.y-38)});
  cx.setTransform(1,0,0,1,0,0);
- if(p.al){var r=(C.role==='imp'?330:240)*sc;if(C.role!=='imp'&&C.sabotageUntil>Date.now())r*=.48;var g=cx.createRadialGradient(cv.width/2,cv.height/2,r*.45,cv.width/2,cv.height/2,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.96)');cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height)}
+ if(p.al){var r=(C.role==='imp'?330:240)*sc;if(C.role!=='imp')r*=Number(roomCfg.vision)||1;if(C.role!=='imp'&&C.sabotageUntil>Date.now())r*=.48;var g=cx.createRadialGradient(cv.width/2,cv.height/2,r*.45,cv.width/2,cv.height/2,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.96)');cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height)}
  // buttons
  var t=nearTask(),nearT=Math.hypot(p.x-TBL[0],p.y-TBL[1])<110,u=$('use');
  u.disabled=(!p.al&&C.role!=='crew')||(t<0&&!nearT);u.textContent=t>-1?'TASK':(nearT?'MEETING':'USE');
