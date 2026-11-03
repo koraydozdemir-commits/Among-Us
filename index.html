@@ -211,6 +211,7 @@ SupabasePeer.prototype.connect=function(target){
  var c=new RealtimeConn(this,'host',false);c.open=false;this.clientConnection=c;this.room=code;
  this.channel=sbClient.channel('ja-room-'+code,{config:{broadcast:{ack:true,self:false},presence:{key:this.id}}});
  this.channel.on('broadcast',{event:'packet'},function(msg){self.receive(msg&&msg.payload)});
+ this.channel.on('presence',{event:'leave'},function(p){if(p&&p.key==='host'&&!self.destroyed){self.emit('error',{type:'host-disconnected'})}});
  this.channel.subscribe(function(status){
   if(self.destroyed)return;
   if(status==='SUBSCRIBED'){
