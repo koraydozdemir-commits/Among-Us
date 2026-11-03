@@ -63,18 +63,18 @@ const VENTS=VENT_META.map(v=>v.canvas.slice()),VENT_LINKS=VENT_META.map(v=>v.lin
 
 const TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE',null,'DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
 const ST=[
- [105,450],[245,245],[535,390],[546,570],[930,520],[1127,680],[1115,180],[1380,410],
- [115,470],[570,535],[830,300],[1015,360],[730,740],[1370,445],[540,610],[546,570],[830,300],[585,400]
+ [152,450],[285,270],[535,390],[546,570],[1000,550],[1170,720],[1178,225],[1320,465],
+ [152,480],[600,550],[830,300],[955,395],[730,740],[1320,465],null,[546,570],[830,300],[585,400]
 ];
 const WIRE_STATIONS=[
- {name:'Admin',point:[930,555],stages:[1,2]},
- {name:'Cafeteria',point:[900,310],stages:[1,2]},
+ {name:'Admin',point:[1000,555],stages:[1,2]},
+ {name:'Cafeteria',point:[950,300],stages:[1,2]},
  {name:'Electrical',point:[546,570],stages:[0]},
- {name:'Navigation',point:[1380,420],stages:[0,1,2]},
+ {name:'Navigation',point:[1320,465],stages:[0,1,2]},
  {name:'Security',point:[357,450],stages:[2]},
  {name:'Storage',point:[730,680],stages:[0,1]}
 ];
-const POWER_TARGETS=[[950,780],[930,555],[1127,680],[1380,420],[245,245],[535,390],[1015,360]];
+const POWER_TARGETS=[[990,805],[1000,555],[1170,720],[1320,465],[285,270],[535,390],[955,395]];
 const POWER_TARGET_NAMES=['COMMUNICATIONS','ADMIN','SHIELDS','NAVIGATION','UPPER ENGINE','MEDBAY','O2'];
 const TBL=[820,205];
 
@@ -97,27 +97,27 @@ const CAMERAS=[
  {name:'O2 hallway',x:1080,y:385,angle:Math.PI}
 ];
 const PROPS=[
- {id:'upper-engine',x:255,y:205,w:110,h:84},
- {id:'lower-engine',x:255,y:625,w:110,h:84},
+ {id:'upper-engine',x:255,y:205,w:88,h:68},
+ {id:'lower-engine',x:255,y:625,w:88,h:68},
  {id:'reactor-core',x:90,y:420,w:96,h:110},
- {id:'security-desk',x:360,y:405,w:56,h:38},
- {id:'medbay-bed-a',x:500,y:325,w:50,h:86},
- {id:'medbay-bed-b',x:570,y:325,w:50,h:86},
- {id:'cafeteria-table-a',x:740,y:125,w:86,h:58},
- {id:'cafeteria-table-b',x:890,y:125,w:86,h:58},
- {id:'cafeteria-table-c',x:740,y:295,w:86,h:58},
- {id:'cafeteria-table-d',x:890,y:295,w:86,h:58},
- {id:'meeting-table',x:820,y:205,w:64,h:44},
- {id:'weapons-cannon',x:1115,y:180,w:116,h:76},
- {id:'admin-table',x:930,y:500,w:110,h:78},
- {id:'shield-generator',x:1127,y:650,w:96,h:96}
+ {id:'security-desk',x:360,y:405,w:48,h:32},
+ {id:'medbay-bed-a',x:492,y:325,w:42,h:72},
+ {id:'medbay-bed-b',x:555,y:325,w:42,h:72},
+ {id:'cafeteria-table-a',x:740,y:125,w:76,h:52},
+ {id:'cafeteria-table-b',x:890,y:125,w:76,h:52},
+ {id:'cafeteria-table-c',x:740,y:295,w:76,h:52},
+ {id:'cafeteria-table-d',x:890,y:295,w:76,h:52},
+ {id:'meeting-table',x:820,y:205,w:58,h:40},
+ {id:'weapons-cannon',x:1115,y:180,w:104,h:68},
+ {id:'admin-table',x:930,y:500,w:100,h:70},
+ {id:'shield-generator',x:1127,y:650,w:66,h:66}
 ];
 const BLOCKERS=PROPS.map(p=>[p.x-p.w/2,p.y-p.h/2,p.w,p.h]).concat([
  [480,492,30,48],[520,492,30,48],[560,492,30,48],[600,492,30,48],
- [480,610,30,42],[520,610,30,42],[560,610,30,42],[600,610,30,42],
+ [480,610,30,42],[520,610,30,42],[560,610,30,42],
  [660,590,42,42],[750,590,42,42],[800,590,38,38],[660,705,42,42],[800,705,38,38],[740,770,42,38],
  [1000,335,46,26],[1032,373,38,26],[1340,340,58,32],[1380,405,55,32],[1310,430,50,26],
- [890,565,46,24],[970,565,46,24],[950,755,70,32],[1090,610,50,28],[1160,700,50,28]
+ [890,565,46,24],[970,565,46,24],[950,755,54,28],[1090,610,42,24]
 ]);
 const DEFAULT_WIRE_ROUTE=[WIRE_STATIONS[2].point,WIRE_STATIONS[5].point,WIRE_STATIONS[0].point];
 global.JohnnySkeldMapData=Object.freeze({
