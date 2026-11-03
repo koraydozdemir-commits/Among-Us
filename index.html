@@ -948,22 +948,22 @@ function polyPath(poly){
  cx.closePath();
 }
 function floorTexture(poly,room){
- cx.save();polyPath(poly);cx.clip();
+ // Keep the deck clean and continuous: no repeated crosshatch, tile grid,
+ // checkerboard, or parallel stripe overlays across walkable areas.
+ cx.save();
+ polyPath(poly);
+ cx.clip();
  var xs=poly.map(function(p){return p[0]}),ys=poly.map(function(p){return p[1]});
  var x=Math.min.apply(null,xs),y=Math.min.apply(null,ys),w=Math.max.apply(null,xs)-x,h=Math.max.apply(null,ys)-y;
- cx.fillStyle='#aeb2ad';cx.fillRect(x,y,w,h);
- cx.fillStyle='rgba(255,255,255,.13)';cx.fillRect(x,y,w,Math.max(3,h*.025));
- cx.strokeStyle='rgba(61,72,72,.13)';cx.lineWidth=2;
- for(var xx=x+30;xx<x+w;xx+=64){cx.beginPath();cx.moveTo(xx,y+8);cx.lineTo(xx,y+h-8);cx.stroke()}
- for(var yy=y+30;yy<y+h;yy+=64){cx.beginPath();cx.moveTo(x+8,yy);cx.lineTo(x+w-8,yy);cx.stroke()}
- if(room.kind==='cafeteria'){
-  for(var yy=y-30;yy<y+h+30;yy+=54)for(var xx=x-30;xx<x+w+30;xx+=54){
-   cx.fillStyle=((Math.floor(xx/54)+Math.floor(yy/54))%2)?'rgba(73,83,81,.055)':'rgba(255,255,255,.07)';cx.fillRect(xx,yy,54,54);
-  }
- }
- if(room.kind==='electrical'){
-  for(var z=0;z<6;z++){cx.strokeStyle=['#bd8b45','#4c9d91','#a65353'][z%3];cx.lineWidth=3;cx.beginPath();cx.moveTo(x+12,y+28+z*18);cx.lineTo(x+w-12,y+28+z*18);cx.stroke()}
- }
+ var deck=cx.createLinearGradient(x,y,x+w,y+h);
+ deck.addColorStop(0,'#b9bfba');
+ deck.addColorStop(.52,'#aeb5b0');
+ deck.addColorStop(1,'#9da7a2');
+ cx.fillStyle=deck;
+ cx.fillRect(x,y,w,h);
+ // One restrained soft highlight gives the floor depth without making a grate.
+ cx.fillStyle='rgba(255,255,255,.075)';
+ cx.fillRect(x,y,w,Math.max(2,h*.018));
  cx.restore();
 }
 function drawSkeld(){
