@@ -258,7 +258,7 @@ canvas{image-rendering:auto}
 .sab-map{padding:13px;border:1px solid #8baac32a;border-radius:16px;background:#050e19}.sab-map-head{display:flex;justify-content:space-between;color:#829ab4;font-size:8px;font-weight:900;letter-spacing:1.8px;margin-bottom:10px}.sab-deck{height:148px;position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:7px;padding:7px;background:linear-gradient(135deg,#132a3d,#0b1b2c);border:1px solid #5f789044;border-radius:12px;overflow:hidden}.sab-room{z-index:1;display:grid;place-items:center;border:1px solid #8bb7d13c;border-radius:7px;background:linear-gradient(145deg,#29435a,#142b40);color:#c9deef;font-size:8px;font-weight:900;letter-spacing:1px;text-shadow:0 2px 4px #000}.r-caf{grid-column:2}.r-admin{grid-column:3;grid-row:1}.r-elec{grid-column:1;grid-row:2;border-color:#ff718a99;background:linear-gradient(145deg,#693047,#301c31);color:#ffd9df;box-shadow:inset 0 0 18px #ff456622}.r-react{grid-column:2;grid-row:2}.r-nav{grid-column:3;grid-row:2}.r-eng{grid-column:1;grid-row:1}.sab-route{position:absolute;inset:50% 7%;height:1px;background:#83b6d555;transform:rotate(-8deg)}
 .sab-option{display:flex;align-items:center;gap:13px;width:100%;min-height:88px;padding:14px;text-align:left;border:1px solid #ff718a77;border-radius:15px;background:linear-gradient(110deg,#48263a,#20233a);box-shadow:inset 0 1px #ffffff1c,0 9px 24px #0005}.sab-icon{width:45px;height:45px;flex:0 0 45px;display:grid;place-items:center;border-radius:13px;background:#ff617d22;border:1px solid #ff839955;color:#ff9bac;font-size:29px}.sab-copy{display:flex;flex-direction:column;gap:4px;min-width:0}.sab-copy b{font-size:13px;letter-spacing:1.7px;color:#fff}.sab-copy small{font-size:10px;line-height:1.45;color:#d1bfd0}.sab-copy em{font-size:9px;font-style:normal;color:#ff9cab;letter-spacing:.4px}.sab-arrow{margin-left:auto;font-size:28px;color:#ff9bad}.sab-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#9aacc0;font-size:9px;font-weight:900;letter-spacing:1.2px}.sab-foot>span{display:flex;align-items:center;gap:7px}.sab-foot button{min-height:38px;padding:0 13px;border:1px solid #ffffff24;border-radius:10px;background:#ffffff0c;color:#dce9f7;font-size:9px;letter-spacing:1.4px}.sab-foot button b{margin-left:8px;color:#ff9bad;font-size:15px}
 @media(max-width:430px){.sab-shell{gap:12px;border-radius:19px}.sab-deck{height:125px}.sab-room{font-size:7px}.sab-copy small{font-size:9px}}
-</style></head><body>
+.reactor-board{width:min(340px,100%);padding:15px;border:5px ridge #91a6b5;background:linear-gradient(145deg,#9ba6ad,#4c5b66);box-shadow:inset 0 0 0 5px #263744}.reactor-screen{padding:12px;margin-bottom:12px;background:#08131b;border:3px solid #b8c4c9;color:#8ef7cb;font:900 12px monospace;letter-spacing:1.4px}.reactor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.reactor-key{min-height:57px;border:4px outset #bcc5cb;border-radius:5px;background:linear-gradient(145deg,#dce1e2,#85949c);color:#263645;font-size:21px;font-weight:900}.reactor-key.flash{background:#2d91cf;color:#fff;box-shadow:0 0 22px #42b9ff}.reactor-key.correct{border-style:inset;background:#2b8b66;color:white}.engine-task,.scan-task,.upload-task,.steering-task,.fuel-task{width:min(390px,100%);display:flex;flex-direction:column;align-items:center;gap:16px;padding:18px;border:5px ridge #9cabb4;background:linear-gradient(145deg,#a8b1b4,#596a72);box-shadow:inset 0 0 0 4px #273b45}.engine-track{position:relative;width:100%;height:80px;border:3px inset #dce5e8;background:#172a36;display:flex;align-items:center}.engine-target{position:absolute;left:49%;height:100%;border-left:4px dashed #5ce4a5;pointer-events:none}.engine-slider,.steering-slider{width:100%;accent-color:#43b9de}.engine-readout{font:900 12px monospace;color:#0c2633;letter-spacing:2px}.scan-ring{width:145px;height:145px;border:9px double #d5e4e7;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#72b8b9,#234e5d);color:#e4ffff;font:900 12px monospace;box-shadow:0 0 24px #72eee755}.scan-ring.scanning{animation:scanPulse .75s infinite alternate}@keyframes scanPulse{to{box-shadow:0 0 42px #59ffd3;filter:brightness(1.4)}}.scan-bar{width:min(300px,100%);height:13px;background:#152b36;border:2px solid #d9e5e2;overflow:hidden}.scan-bar i{display:block;width:0;height:100%;background:#61e5b0}.card-task{width:min(350px,100%);height:205px;position:relative;padding:20px;background:linear-gradient(145deg,#8a9296,#59656a);border:5px ridge #c8d1d0}.card-reader{position:absolute;right:18px;top:15px;bottom:15px;width:78px;border:4px inset #d5dcde;background:#283a43;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#8fffe0;font:900 10px monospace}.card-reader i{width:5px;height:65%;background:#0a151d}.card-reader.accepted{background:#24624d}.id-card{position:absolute;left:17px;top:53px;width:185px;height:105px;min-height:0;padding:12px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:9px;background:linear-gradient(145deg,#e9e5d4,#aebac0);color:#273744;border:3px solid #566a75;border-radius:5px;touch-action:none}.id-card b{font-size:10px;letter-spacing:1px}.id-card strong{font-size:13px}.id-card small{font-size:9px}.id-card.dragging{box-shadow:0 10px 28px #0009}.card-hint{position:absolute;bottom:11px;left:0;right:0;color:#243c47;font:900 10px monospace;letter-spacing:2px}.shield-grid{display:grid;grid-template-columns:repeat(4,58px);gap:9px}.shield-cell{min-height:56px;min-width:0;padding:0;border-radius:7px;font-size:32px;background:#702f42;color:#ff9eb3;border:3px solid #d49ba9}.shield-cell.online{background:#267e60;color:#aaffd5;border-color:#a5f2c7}.asteroid-field,.manifold-grid,.course-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(350px,100%);padding:12px;background:#1c3344;border:4px ridge #9cabb4}.asteroid{min-width:0;min-height:56px;padding:0;background:radial-gradient(circle at 35% 25%,#c6d3d7,#53636c 65%,#263943);border:3px solid #a7b8bb;color:#152734;font-size:26px}.asteroid.destroyed{opacity:.2;transform:scale(.4);pointer-events:none}.manifold-grid{grid-template-columns:repeat(5,1fr)}.manifold-key,.course-node{min-width:0;min-height:49px;padding:0;background:linear-gradient(145deg,#c2c8c9,#718188);border:4px outset #d3d9d8;color:#243642}.manifold-key.online,.course-node.online{background:#368968;color:white;border-style:inset}.steering-target{width:150px;height:150px;border:3px solid #c5e0e3;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#1b2e39,#476875)}.steering-target i{width:20px;height:20px;border:3px solid #8bf5de;border-radius:50%;box-shadow:0 0 18px #69f3d6}.filter-task{width:min(350px,100%);display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px;background:#1b3445;border:5px ridge #9daeb5}.filter-leaf{min-width:0;min-height:58px;padding:0;background:#9aab9e;color:#263b3b;font-size:25px}.filter-leaf:disabled{opacity:.15}.fuel-tank{height:170px;width:85px;border:7px ridge #d3dedb;border-radius:12px 12px 24px 24px;background:#172d37;display:flex;align-items:flex-end;overflow:hidden}.fuel-tank i{display:block;width:100%;height:0;background:linear-gradient(#c4f2a3,#4eaf78)}.data-icon{font-size:60px;color:#e9f6f5}@media(max-width:430px){.reactor-key{min-height:49px}.card-task{transform:scale(.94);transform-origin:center}.shield-grid{grid-template-columns:repeat(4,50px)}}</style></head><body>
 <canvas id="cv"></canvas>
 <div id="hud"><div>Role: <span id="role"></span><div id="tl" style="font-weight:400;font-size:14px;margin-top:4px"></div></div><div>Tasks<div id="bar"><i></i></div></div></div>
 <div id="hold"><i></i></div>
@@ -847,7 +847,22 @@ function startTask(id){
  var p=C.pos[me];if(activeTask!==-1||pendingTask!==-1||!p||C.tasks.indexOf(id)<0||C.mine[id]||Math.hypot(p.x-ST[id][0],p.y-ST[id][1])>=78)return;
  activeTask=id;$('taskpanel').style.display='flex';$('taskstatus').textContent='';$('taskarea').innerHTML='';
  $('tasktitle').textContent=TASK_NAMES[id]+' · '+['POWER ROUTING','ENGINE STABILISATION','SIGNAL CALIBRATION','SAMPLE SCAN','SUPPLY SORTING','GRID REPAIR'][id];
- if(id%3===0)wireTask();else if(id%3===1)memoryTask();else alignTask();
+ switch(id){
+  case 0: memoryTask();break;
+  case 1: alignEngineTask();break;
+  case 2: submitScanTask();break;
+  case 3: wireTask();break;
+  case 4: swipeCardTask();break;
+  case 5: primeShieldsTask();break;
+  case 6: clearAsteroidsTask();break;
+  case 7: stabilizeSteeringTask();break;
+  case 8: unlockManifoldsTask();break;
+  case 9: alignTask();break;
+  case 10: uploadDataTask();break;
+  case 11: cleanFilterTask();break;
+  case 12: fuelEnginesTask();break;
+  case 13: chartCourseTask();break;
+ }
 }
 function finishTask(){var id=activeTask;if(id<0||pendingTask===id)return;pendingTask=id;$('taskstatus').textContent='VERIFYING WITH SHIP…';Array.from($('taskarea').querySelectorAll('button')).forEach(function(b){b.disabled=true});toHost({t:'do',id:id})}
 function wireTask(){
@@ -870,19 +885,114 @@ function wireTask(){
  board.append(left,svg,right);$('taskarea').appendChild(board);taskPos=0;redraw();
 }
 function memoryTask(){
- $('taskdesc').textContent='Watch the panel, then repeat the sequence.';
- var seq=[0,1,2,3].sort(function(){return Math.random()-.5}).slice(0,3);taskTarget=seq;taskChosen=[];
- var box=document.createElement('div');box.style.display='flex';box.style.gap='10px';box.style.flexWrap='wrap';box.style.justifyContent='center';
- for(var i=0;i<4;i++){(function(n){var b=document.createElement('button');b.className='tasktile';b.style.borderColor=taskColors[n];b.textContent='●';b.onclick=function(){if(taskPos>=seq.length)return;if(n===seq[taskPos]){taskPos++;$('taskstatus').textContent=taskPos+'/'+seq.length+' correct';if(taskPos===seq.length)finishTask()}else{taskPos=0;$('taskstatus').textContent='Incorrect. Sequence reset.'}};box.appendChild(b)})(i)}
- taskPos=0;$('taskarea').appendChild(box);var step=0;
- function flash(){if(step>=seq.length){$('taskstatus').textContent='Your turn — repeat the sequence.';return}var b=box.children[seq[step]];b.style.background=taskColors[seq[step]];setTimeout(function(){b.style.background='';step++;setTimeout(flash,220)},450)}
- setTimeout(flash,350);
+ $('taskdesc').textContent='Memorise the sequence, then repeat it on the reactor keypad.';
+ var seq=Array.from({length:5},function(){return Math.floor(Math.random()*9)});taskTarget=seq;taskPos=0;
+ var box=document.createElement('div');box.className='reactor-board';
+ var screen=document.createElement('div');screen.className='reactor-screen';screen.textContent='WATCH THE SEQUENCE';
+ var grid=document.createElement('div');grid.className='reactor-grid';
+ for(var i=0;i<9;i++){(function(n){var b=document.createElement('button');b.className='reactor-key';b.textContent=String(n+1);b.onclick=function(){if(step<seq.length)return;if(n===seq[taskPos]){taskPos++;b.classList.add('correct');screen.textContent='INPUT '+taskPos+' / '+seq.length;if(taskPos===seq.length)finishTask()}else{taskPos=0;screen.textContent='INCORRECT · REPEAT SEQUENCE';Array.from(grid.children).forEach(function(x){x.classList.remove('correct')})}};grid.appendChild(b)})(i)}
+ box.append(screen,grid);$('taskarea').appendChild(box);var step=0;
+ function flash(){if(step>=seq.length){screen.textContent='ENTER THE SEQUENCE';return}var b=grid.children[seq[step]];b.classList.add('flash');setTimeout(function(){b.classList.remove('flash');step++;setTimeout(flash,250)},530)}
+ setTimeout(flash,450);
 }
 function alignTask(){
  $('taskdesc').textContent='Tap LOCK when the moving marker is inside the green zone. Do this three times.';
  var track=document.createElement('div');track.id='aligntrack';var zone=document.createElement('div');zone.id='alignzone';var needle=document.createElement('div');needle.id='alignneedle';track.append(zone,needle);var lock=document.createElement('button');lock.className='tasktile';lock.textContent='LOCK';lock.onclick=function(){var x=parseFloat(needle.style.left)||0;if(x>=42&&x<=58){taskRound++;$('taskstatus').textContent='Calibration '+taskRound+'/3';if(taskRound===3)finishTask()}else{$('taskstatus').textContent='Missed — keep calibrating.'}};$('taskarea').append(track,lock);taskRound=0;var x=0,dir=1;
  taskTimer=setInterval(function(){x+=dir*1.8;if(x>95||x<0)dir*=-1;needle.style.left=x+'%'},20);
 }
+function taskPanelTitle(title,desc){$('tasktitle').textContent=title;$('taskdesc').textContent=desc}
+function alignEngineTask(){
+ taskPanelTitle('ALIGN ENGINE OUTPUT','Drag the output marker until it sits on the centre guide.');
+ var wrap=document.createElement('div');wrap.className='engine-task';
+ var track=document.createElement('div');track.className='engine-track';
+ var target=document.createElement('i');target.className='engine-target';
+ var marker=document.createElement('input');marker.type='range';marker.min='0';marker.max='100';marker.value='15';marker.className='engine-slider';
+ var label=document.createElement('div');label.className='engine-readout';label.textContent='ENGINE OUTPUT · 15%';
+ var lock=document.createElement('button');lock.className='tasktile';lock.textContent='ALIGN';
+ marker.oninput=function(){label.textContent='ENGINE OUTPUT · '+marker.value+'%'};
+ lock.onclick=function(){if(Number(marker.value)>=46&&Number(marker.value)<=54)finishTask();else $('taskstatus').textContent='OUTPUT MISALIGNED · TRY AGAIN'};
+ track.append(target,marker);wrap.append(track,label,lock);$('taskarea').appendChild(wrap);
+}
+function submitScanTask(){
+ taskPanelTitle('SUBMIT SCAN','Step onto the scanner and hold still until the scan is complete.');
+ var wrap=document.createElement('div');wrap.className='scan-task';
+ var ring=document.createElement('div');ring.className='scan-ring';ring.innerHTML='<span>READY</span>';
+ var bar=document.createElement('div');bar.className='scan-bar';bar.innerHTML='<i></i>';
+ var start=document.createElement('button');start.className='tasktile';start.textContent='START SCAN';
+ start.onclick=function(){start.disabled=true;var t=0;taskTimer=setInterval(function(){t+=100;bar.firstChild.style.width=Math.min(100,t/65)+'%';ring.classList.add('scanning');ring.firstChild.textContent='SCANNING';if(t>=6500){clearInterval(taskTimer);taskTimer=null;ring.firstChild.textContent='SCAN COMPLETE';finishTask()}},100)};
+ wrap.append(ring,bar,start);$('taskarea').appendChild(wrap);
+}
+function swipeCardTask(){
+ taskPanelTitle('SWIPE CARD','Pick up the ID card and swipe it through the reader at a steady speed.');
+ var wrap=document.createElement('div');wrap.className='card-task';
+ var reader=document.createElement('div');reader.className='card-reader';reader.innerHTML='<span>INSERT CARD</span><i></i>';
+ var card=document.createElement('button');card.type='button';card.className='id-card';card.innerHTML='<b>CREWMATE ID</b><strong>JOHNNY CREW</strong><small>ACCESS AUTHORISED</small>';
+ var hint=document.createElement('div');hint.className='card-hint';hint.textContent='DRAG CARD →';
+ var startX=0,startTime=0,drag=false;
+ card.onpointerdown=function(e){e.preventDefault();drag=true;startX=e.clientX;startTime=Date.now();try{card.setPointerCapture(e.pointerId)}catch(x){}card.classList.add('dragging')};
+ card.onpointermove=function(e){if(!drag)return;var dx=Math.max(0,Math.min(210,e.clientX-startX));card.style.transform='translateX('+dx+'px) rotate(-2deg)'};
+ card.onpointerup=function(e){if(!drag)return;drag=false;var dx=e.clientX-startX,elapsed=Date.now()-startTime;card.classList.remove('dragging');card.style.transform='';if(dx>155&&elapsed>=300&&elapsed<=1050){reader.classList.add('accepted');reader.firstChild.textContent='ACCESS GRANTED';hint.textContent='CARD ACCEPTED';finishTask()}else{reader.classList.remove('accepted');reader.firstChild.textContent=elapsed<300?'TOO FAST · TRY AGAIN':'TOO SLOW · TRY AGAIN';hint.textContent='SWIPE AT A STEADY SPEED'}};
+ wrap.append(reader,card,hint);$('taskarea').appendChild(wrap);
+}
+function primeShieldsTask(){
+ taskPanelTitle('PRIME SHIELDS','Activate every red shield cell. Green cells are already online.');
+ var grid=document.createElement('div');grid.className='shield-grid';var left=0;
+ for(var i=0;i<7;i++){(function(n){var b=document.createElement('button');b.className='shield-cell '+(n%3===0?'online':'offline');if(n%3!==0)left++;b.textContent='⬡';b.onclick=function(){if(b.classList.contains('online'))return;b.classList.remove('offline');b.classList.add('online');left--;if(left===0)finishTask()};grid.appendChild(b)})(i)}
+ $('taskarea').appendChild(grid);
+}
+function clearAsteroidsTask(){
+ taskPanelTitle('CLEAR ASTEROIDS','Tap the incoming asteroids to destroy them. Clear the field to finish.');
+ var grid=document.createElement('div');grid.className='asteroid-field';var left=12;
+ for(var i=0;i<12;i++){(function(n){var b=document.createElement('button');b.className='asteroid';b.textContent=['✦','✧','◆','✹'][n%4];b.style.transform='rotate('+(n*29)+'deg)';b.onclick=function(){if(b.disabled)return;b.disabled=true;b.classList.add('destroyed');left--;$('taskstatus').textContent=(12-left)+' / 12 DESTROYED';if(left===0)finishTask()};grid.appendChild(b)})(i)}
+ $('taskarea').appendChild(grid);
+}
+function stabilizeSteeringTask(){
+ taskPanelTitle('STABILIZE STEERING','Move the reticle to the centre of the navigation target and lock course.');
+ var wrap=document.createElement('div');wrap.className='steering-task';
+ var target=document.createElement('div');target.className='steering-target';target.innerHTML='<i></i>';
+ var range=document.createElement('input');range.type='range';range.min='0';range.max='100';range.value='15';range.className='steering-slider';
+ var lock=document.createElement('button');lock.className='tasktile';lock.textContent='LOCK COURSE';
+ var label=document.createElement('div');label.className='engine-readout';label.textContent='HEADING · 015°';
+ range.oninput=function(){label.textContent='HEADING · '+String(Math.round(Number(range.value)*3.6)).padStart(3,'0')+'°';target.style.transform='rotate('+(Number(range.value)-50)*1.8+'deg)'};
+ lock.onclick=function(){if(Number(range.value)>=46&&Number(range.value)<=54)finishTask();else $('taskstatus').textContent='COURSE NOT STABLE'};
+ wrap.append(target,range,label,lock);$('taskarea').appendChild(wrap);
+}
+function unlockManifoldsTask(){
+ taskPanelTitle('UNLOCK MANIFOLDS','Tap the numbered manifolds in ascending order, from 1 to 10.');
+ var grid=document.createElement('div');grid.className='manifold-grid';var order=Array.from({length:10},function(_,i){return i+1}).sort(function(){return Math.random()-.5});var next=1;
+ order.forEach(function(n){var b=document.createElement('button');b.className='manifold-key';b.textContent=n;b.onclick=function(){if(n===next){b.classList.add('online');b.disabled=true;next++;$('taskstatus').textContent='MANIFOLD '+(next-1)+' / 10';if(next===11)finishTask()}else{$('taskstatus').textContent='WRONG ORDER · START AGAIN';next=1;Array.from(grid.children).forEach(function(x){x.disabled=false;x.classList.remove('online')})}};grid.appendChild(b)});
+ $('taskarea').appendChild(grid);
+}
+function uploadDataTask(){
+ taskPanelTitle('UPLOAD DATA','Transfer the recovered data packet to the ship network.');
+ var wrap=document.createElement('div');wrap.className='upload-task';var icon=document.createElement('div');icon.className='data-icon';icon.textContent='▤';
+ var bar=document.createElement('div');bar.className='scan-bar';bar.innerHTML='<i></i>';var button=document.createElement('button');button.className='tasktile';button.textContent='UPLOAD';
+ button.onclick=function(){button.disabled=true;var t=0;taskTimer=setInterval(function(){t+=100;bar.firstChild.style.width=(t/48)+'%';if(t>=4800){clearInterval(taskTimer);taskTimer=null;icon.textContent='✓';finishTask()}},100)};
+ wrap.append(icon,bar,button);$('taskarea').appendChild(wrap);
+}
+function cleanFilterTask(){
+ taskPanelTitle('CLEAN O2 FILTER','Remove all floating debris from the air filter.');
+ var wrap=document.createElement('div');wrap.className='filter-task';var left=8;
+ for(let i=0;i<8;i++){let b=document.createElement('button');b.className='filter-leaf';b.textContent=['✦','◆','✧','✹'][i%4];b.onclick=function(){if(b.disabled)return;b.disabled=true;b.classList.add('cleared');left--;if(left===0)finishTask()};wrap.appendChild(b)}
+ $('taskarea').appendChild(wrap);
+}
+function fuelEnginesTask(){
+ taskPanelTitle('FUEL ENGINES','Press and hold FUEL until the tank is full. Releasing stops the pump.');
+ var wrap=document.createElement('div');wrap.className='fuel-task';var tank=document.createElement('div');tank.className='fuel-tank';var fill=document.createElement('i');tank.appendChild(fill);
+ var button=document.createElement('button');button.className='tasktile';button.textContent='HOLD TO FUEL';var amount=0,active=false;
+ function pump(){if(!active)return;amount=Math.min(100,amount+1.6);fill.style.height=amount+'%';$('taskstatus').textContent=Math.floor(amount)+'%';if(amount>=100){active=false;finishTask()}}
+ button.onpointerdown=function(e){e.preventDefault();active=true;taskTimer=setInterval(pump,60)};
+ function release(){active=false;if(taskTimer){clearInterval(taskTimer);taskTimer=null}}
+ button.onpointerup=release;button.onpointercancel=release;button.onlostpointercapture=release;
+ wrap.append(tank,button);$('taskarea').appendChild(wrap);
+}
+function chartCourseTask(){
+ taskPanelTitle('CHART COURSE','Plot the route by selecting each beacon in numerical order.');
+ var grid=document.createElement('div');grid.className='course-grid';var order=[0,1,2,3,4].sort(function(){return Math.random()-.5});var next=1;
+ order.forEach(function(n){var b=document.createElement('button');b.className='course-node';b.textContent=n+1;b.onclick=function(){if(n+1===next){b.classList.add('online');b.disabled=true;next++;if(next===6)finishTask()}else{$('taskstatus').textContent='ROUTE INVALID · TRY AGAIN';next=1;Array.from(grid.children).forEach(function(x){x.disabled=false;x.classList.remove('online')})}};grid.appendChild(b)});
+ $('taskarea').appendChild(grid);
+}
+
 $('kill').addEventListener('pointerdown',function(e){e.preventDefault();toHost({t:'kill'})});
 $('vent').addEventListener('pointerdown',function(e){e.preventDefault();toHost({t:'vent'})});
 function closeSabMenu(){$('sabpanel').hidden=true}
