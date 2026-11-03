@@ -747,53 +747,10 @@ function pointInPoly(x,y,poly){
  }
  return inside;
 }
-var WALL_SEGMENTS=[];
-function buildWallSegments(){
- WALL_SEGMENTS=[];
- function addPolyEdges(poly,otherPolys){
-  for(var i=0;i<poly.length;i++){
-   var a=poly[i],b=poly[(i+1)%poly.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy),steps=Math.max(1,Math.ceil(len/5)),run=null;
-   for(var j=0;j<steps;j++){
-    var t0=j/steps,t1=(j+1)/steps,tm=(t0+t1)*.5,mx=a[0]+dx*tm,my=a[1]+dy*tm;
-    var open=otherPolys.some(function(q){return pointInPoly(mx,my,q)});
-    if(!open){if(!run)run=[a[0]+dx*t0,a[1]+dy*t0];}
-    else if(run){WALL_SEGMENTS.push([run[0],run[1],a[0]+dx*t0,a[1]+dy*t0]);run=null;}
-   }
-   if(run)WALL_SEGMENTS.push([run[0],run[1],b[0],b[1]]);
-  }
- }
- FLOORS.forEach(function(r){addPolyEdges(r.p,HALLS)});
- HALLS.forEach(function(p){addPolyEdges(p,FLOORS.concat(HALLS.filter(function(q){return q!==p})))});
-}
-buildWallSegments();
-function wallDistanceSq(x,y,seg){
- var dx=seg[2]-seg[0],dy=seg[3]-seg[1],l=dx*dx+dy*dy;
- var t=l?Math.max(0,Math.min(1,((x-seg[0])*dx+(y-seg[1])*dy)/l)):0;
- var px=seg[0]+t*dx,py=seg[1]+t*dy;
- return (x-px)*(x-px)+(y-py)*(y-py);
-}
-function drawWalls(){
- cx.save();cx.lineCap='round';cx.lineJoin='round';
- // A single continuous-looking bulkhead treatment, with no striped grate overlays.
- cx.strokeStyle='rgba(12,22,27,.42)';cx.lineWidth=18;cx.shadowColor='rgba(0,0,0,.34)';cx.shadowBlur=7;cx.shadowOffsetY=3;
- WALL_SEGMENTS.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke()});
- cx.shadowBlur=0;cx.shadowOffsetY=0;
- cx.strokeStyle='#34464d';cx.lineWidth=14;
- WALL_SEGMENTS.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke()});
- cx.strokeStyle='#657b80';cx.lineWidth=8;
- WALL_SEGMENTS.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke()});
- cx.strokeStyle='rgba(205,221,216,.30)';cx.lineWidth=2;
- WALL_SEGMENTS.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]-2);cx.lineTo(w[2],w[3]-2);cx.stroke()});
- cx.restore();
-}
-
 function isWalkable(x,y){
  if(x<0||y<0||x>W||y>H)return false;
  var floor=FLOORS.some(function(r){return pointInPoly(x,y,r.p)})||HALLS.some(function(poly){return pointInPoly(x,y,poly)});
  if(!floor)return false;
- // Enforce physical room bulkheads, including the corridor edges. Openings are
- // carved only where a real corridor polygon meets a room boundary.
- for(var wi=0;wi<WALL_SEGMENTS.length;wi++)if(wallDistanceSq(x,y,WALL_SEGMENTS[wi])<64)return false;
  return !BLOCKERS.some(function(b){return x>b[0]-3&&x<b[0]+b[2]+3&&y>b[1]-3&&y<b[1]+b[3]+3});
 }
 function hit(p){
@@ -1018,22 +975,18 @@ function floorTexture(poly,room){
  cx.save();polyPath(poly);cx.clip();
  var xs=poly.map(function(p){return p[0]}),ys=poly.map(function(p){return p[1]});
  var x=Math.min.apply(null,xs),y=Math.min.apply(null,ys),w=Math.max.apply(null,xs)-x,h=Math.max.apply(null,ys)-y;
- var base=room.c||'#71888b',g=cx.createLinearGradient(x,y,x+w*.18,y+h);
- g.addColorStop(0,shade(base,13));g.addColorStop(.48,base);g.addColorStop(1,shade(base,-12));
- cx.fillStyle=g;cx.fillRect(x,y,w,h);
- // Restrained deck panel seams: broad plates, not a distracting square grid.
- cx.strokeStyle='rgba(28,43,47,.10)';cx.lineWidth=2;
- for(var xx=x+72;xx<x+w;xx+=144){cx.beginPath();cx.moveTo(xx,y+8);cx.lineTo(xx,y+h-8);cx.stroke()}
- for(var yy=y+72;yy<y+h;yy+=144){cx.beginPath();cx.moveTo(x+8,yy);cx.lineTo(x+w-8,yy);cx.stroke()}
- cx.strokeStyle='rgba(255,255,255,.10)';cx.lineWidth=2;
- for(var yy2=y+74;yy2<y+h;yy2+=144){cx.beginPath();cx.moveTo(x+8,yy2);cx.lineTo(x+w-8,yy2);cx.stroke()}
+ cx.fillStyle='#aeb2ad';cx.fillRect(x,y,w,h);
+ cx.fillStyle='rgba(255,255,255,.13)';cx.fillRect(x,y,w,Math.max(3,h*.025));
+ cx.strokeStyle='rgba(61,72,72,.13)';cx.lineWidth=2;
+ for(var xx=x+30;xx<x+w;xx+=64){cx.beginPath();cx.moveTo(xx,y+8);cx.lineTo(xx,y+h-8);cx.stroke()}
+ for(var yy=y+30;yy<y+h;yy+=64){cx.beginPath();cx.moveTo(x+8,yy);cx.lineTo(x+w-8,yy);cx.stroke()}
  if(room.kind==='cafeteria'){
-  cx.fillStyle='rgba(236,232,211,.10)';
-  for(var yy3=y-24;yy3<y+h+24;yy3+=48)for(var xx2=x-24;xx2<x+w+24;xx2+=48)cx.fillRect(xx2,yy3,24,24);
+  for(var yy=y-30;yy<y+h+30;yy+=54)for(var xx=x-30;xx<x+w+30;xx+=54){
+   cx.fillStyle=((Math.floor(xx/54)+Math.floor(yy/54))%2)?'rgba(73,83,81,.055)':'rgba(255,255,255,.07)';cx.fillRect(xx,yy,54,54);
+  }
  }
  if(room.kind==='electrical'){
-  cx.strokeStyle='rgba(28,39,38,.30)';cx.lineWidth=2;
-  for(var z=0;z<5;z++){cx.beginPath();cx.moveTo(x+14,y+32+z*24);cx.lineTo(x+w-14,y+32+z*24);cx.stroke()}
+  for(var z=0;z<6;z++){cx.strokeStyle=['#bd8b45','#4c9d91','#a65353'][z%3];cx.lineWidth=3;cx.beginPath();cx.moveTo(x+12,y+28+z*18);cx.lineTo(x+w-12,y+28+z*18);cx.stroke()}
  }
  cx.restore();
 }
@@ -1145,8 +1098,7 @@ function drawSkeld(){
  FLOORS.forEach(function(r){floorTexture(r.p,r)});
  // Clean map edges: omit the thick outlined wall rails.
  // Leave doorways visibly open; the old decorative crossbars looked like floor grates.
- // Proper enclosed room bulkheads with clear, traversable corridor openings.
- drawWalls();
+ // No decorative rail, pipe, or corridor-edge outline overlays.
  drawFurniture();
  // Room vents (14) sit flush with the deck.
  VENTS.forEach(function(v){cx.save();cx.shadowColor='#9d8bf2';cx.shadowBlur=8;cx.fillStyle='#18272e';cx.strokeStyle='#b5a6e8';cx.lineWidth=3;cx.beginPath();cx.roundRect(v[0]-17,v[1]-10,34,20,5);cx.fill();cx.stroke();cx.shadowBlur=0;cx.strokeStyle='#aebcc0';cx.lineWidth=2;for(var z=-9;z<=9;z+=6){cx.beginPath();cx.moveTo(v[0]+z,v[1]-6);cx.lineTo(v[0]+z,v[1]+6);cx.stroke()}cx.restore()});
