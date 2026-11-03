@@ -314,6 +314,7 @@ canvas{image-rendering:auto}
 <div class="scr" id="end" hidden><h1 id="et"></h1><div id="es" style="color:#9aa"></div><button id="again" hidden>Back to lobby</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/skeld-map-data.js"></script>
 <script>
 (function(){'use strict';
 var $=function(i){return document.getElementById(i)};
@@ -321,56 +322,12 @@ var COL=['#ef4444','#3b82f6','#22c55e','#eab308','#ec4899','#f97316','#a855f7','
 var W=1440,H=870,SPD=185,R=10,KR=90,KCD=12000;
 // The Skeld is built in one fixed 1440 × 870 world coordinate space.
 // Room and corridor polygons are traced to the supplied full-map reference.
-var FLOORS=[
- {n:'Upper Engine',p:[[205,112],[376,112],[400,138],[400,270],[372,300],[205,300]],c:'#747c79',kind:'engine'},
- {n:'Reactor',p:[[62,270],[230,250],[260,278],[260,493],[220,530],[62,505]],c:'#716d68',kind:'reactor'},
- {n:'Security',p:[[350,292],[476,292],[495,320],[495,455],[468,482],[350,482]],c:'#657b79',kind:'security'},
- {n:'Lower Engine',p:[[205,520],[376,520],[400,548],[400,678],[372,705],[205,690]],c:'#747c79',kind:'engine'},
- {n:'MedBay',p:[[480,246],[640,246],[682,280],[682,405],[645,444],[500,430],[480,400]],c:'#9aa9a2',kind:'medbay'},
- {n:'Cafeteria',p:[[650,18],[946,18],[1010,82],[1010,298],[950,382],[700,382],[630,298],[630,88]],c:'#aaa996',kind:'cafeteria'},
- {n:'Weapons',p:[[1050,78],[1170,78],[1230,138],[1230,248],[1180,286],[1050,286]],c:'#8b9993',kind:'weapons'},
- {n:'O2',p:[[990,294],[1110,294],[1140,326],[1140,410],[1110,432],[990,432]],c:'#839995',kind:'o2'},
- {n:'Navigation',p:[[1280,300],[1390,300],[1440,350],[1440,450],[1390,492],[1280,492]],c:'#84999b',kind:'nav'},
- {n:'Admin',p:[[890,418],[1065,418],[1095,448],[1095,558],[1055,592],[890,592]],c:'#8c9b91',kind:'admin'},
- {n:'Electrical',p:[[480,462],[650,462],[682,492],[682,642],[650,680],[480,680]],c:'#667a70',kind:'electrical'},
- {n:'Storage',p:[[650,520],[900,520],[950,570],[950,760],[900,820],[690,820],[640,770],[640,575]],c:'#928e79',kind:'storage'},
- {n:'Communications',p:[[900,650],[1065,650],[1095,680],[1095,785],[1055,825],[925,825],[900,790]],c:'#708681',kind:'comms'},
- {n:'Shields',p:[[1090,558],[1225,558],[1260,595],[1260,705],[1220,750],[1090,750]],c:'#879a94',kind:'shields'}
-];
-var HALLS=[
- [[365,160],[655,160],[655,245],[365,245]],
- [[240,350],[360,350],[360,425],[240,425]],
- [[245,475],[355,475],[355,555],[245,555]],
- [[450,365],[510,365],[510,425],[450,425]],
- [[600,345],[690,345],[690,430],[600,430]],
- [[975,165],[1070,165],[1070,245],[975,245]],
- [[1070,245],[1150,245],[1150,320],[1070,320]],
- [[1095,350],[1300,350],[1300,425],[1095,425]],
- [[1065,455],[1300,455],[1300,520],[1065,520]],
- [[815,365],[900,365],[900,455],[815,455]],
- [[645,625],[720,625],[720,700],[645,700]],
- [[895,755],[960,755],[960,825],[895,825]],
- [[1030,625],[1110,625],[1110,700],[1030,700]],
- [[900,555],[980,555],[980,635],[900,635]],
- [[465,425],[535,425],[535,510],[465,510]],
- [[370,600],[485,600],[485,670],[370,670]]
-];
-var ST=[[150,395],[230,265],[580,410],[570,560],[990,510],[1170,650],[1140,185],[1345,400],[190,455],[575,500],[690,110],[1050,360],[800,730],[1370,445],[585,620],[570,510],[885,330],[610,415]];
-var POWER_TARGETS=[[1020,780],[1050,550],[1170,650],[1345,455],[295,265],[580,410],[1050,360]],POWER_TARGET_NAMES=['COMMUNICATIONS','ADMIN','SHIELDS','NAVIGATION','UPPER ENGINE','MEDBAY','O2'];
-var TBL=[820,205];
-var TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE','CLEAN VENT','DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
-var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
-var PANELS=[[535,545]];
-// Furniture collision rectangles are in the same world coordinates as the map.
-var BLOCKERS=[
- [700,100,82,55],[860,100,82,55],[775,185,82,55],[700,270,82,55],[860,270,82,55],
- [520,285,42,90],[610,285,42,90],[545,365,90,28],
- [950,465,85,64],[1080,145,120,80],[1320,340,75,70],[112,340,76,110],
- [500,490,44,40],[600,490,44,40],[500,595,44,40],[600,595,44,40],
- [720,600,62,58],[835,600,62,58],[720,710,62,58],[835,710,62,58],
- [930,680,65,40],[1015,690,65,40],[1125,585,60,42],[1190,650,42,52],
- [250,150,65,48],[300,555,65,48]
-];
+var MAPDATA=window.JohnnySkeldMapData;
+if(!MAPDATA)throw new Error('Skeld map data failed to load.');
+var FLOORS=MAPDATA.FLOORS,HALLS=MAPDATA.HALLS,ST=MAPDATA.ST,
+ POWER_TARGETS=MAPDATA.POWER_TARGETS,POWER_TARGET_NAMES=MAPDATA.POWER_TARGET_NAMES,
+ TBL=MAPDATA.TBL,TASK_NAMES=MAPDATA.TASK_NAMES,VENTS=MAPDATA.VENTS,
+ VENT_LINKS=MAPDATA.VENT_LINKS,PANELS=MAPDATA.PANELS,BLOCKERS=MAPDATA.BLOCKERS;
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /* Supabase Realtime transport. The host remains authoritative; room traffic is
@@ -691,7 +648,17 @@ function handle(id,m){
  else if(m.t==='kill'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.cd){
   var best=null,bd=KR;Object.keys(HS.p).forEach(function(k){var q=HS.p[k];if(q.alive&&q.role==='crew'&&d(p,q)<bd){bd=d(p,q);best=k}});
   if(best){var q=HS.p[best];q.alive=false;HS.bodies.push({id:best,x:q.x,y:q.y});bcast({t:'killfx',x:q.x,y:q.y,col:P[best].col});p.x=q.x;p.y=q.y;p.cd=Date.now()+HS.cfg.cooldown;sendTo(id,{t:'cd',until:p.cd});if(!checkWin())return}}
- else if(m.t==='vent'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.vcd){var vi=-1;for(var z=0;z<VENTS.length;z++)if(d(p,{x:VENTS[z][0],y:VENTS[z][1]})<62){vi=z;break}if(vi>-1){var nv=VENTS[(vi+1)%VENTS.length];p.x=nv[0];p.y=nv[1];p.vcd=Date.now()+6500;sendTo(id,{t:'ventcd',until:p.vcd});bcast({t:'ventfx',x:p.x,y:p.y})}}
+ else if(m.t==='vent'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.vcd){
+  var vi=-1;for(var z=0;z<VENTS.length;z++)if(d(p,{x:VENTS[z][0],y:VENTS[z][1]})<62){vi=z;break}
+  if(vi>-1){
+   var exits=VENT_LINKS[vi]||[];
+   if(exits.length){
+    var destination=exits[(Math.random()*exits.length)|0],nv=VENTS[destination];
+    p.x=nv[0];p.y=nv[1];p.vcd=Date.now()+6500;
+    sendTo(id,{t:'ventcd',until:p.vcd});bcast({t:'ventfx',x:p.x,y:p.y})
+   }
+  }
+ }
  else if(m.t==='sab'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.scd&&!HS.sabotage){
   var type=['lights','reactor','o2','comms','doors'].indexOf(m.type)>-1?m.type:'lights';
   var duration=(type==='reactor'||type==='o2')?35000:(type==='doors'?12000:3600000);
@@ -1338,9 +1305,9 @@ function drawFurniture(){
  // Shields: shield emitter ring and control stations
  cx.save();cx.strokeStyle='#70d7d8';cx.lineWidth=7;cx.shadowColor='#54dbe8';cx.shadowBlur=17;cx.beginPath();cx.arc(1170,650,47,0,Math.PI*2);cx.stroke();cx.shadowBlur=0;cx.fillStyle='#315b68';cx.beginPath();cx.arc(1170,650,25,0,Math.PI*2);cx.fill();cx.strokeStyle='#c1e7d9';cx.lineWidth=3;cx.stroke();cx.restore();drawConsole(1120,590,54,34);drawConsole(1215,700,54,34);
 }
-var DOORWAYS=[[392,180,16,52,true],[252,365,16,50,true],[270,497,55,16,false],[392,610,16,48,true],[487,370,16,48,true],[674,355,16,50,true],[1002,180,16,50,true],[1090,278,54,16,false],[1132,360,16,48,true],[1272,360,16,48,true],[1272,465,16,48,true],[845,374,50,16,false],[860,410,50,16,false],[490,454,50,16,false],[635,640,16,48,true],[890,770,16,48,true],[1080,640,16,48,true],[930,560,16,48,true]];
+var DOORWAYS=MAPDATA.DOORWAYS;
 var OCCLUDERS=null;
-var REACTOR_PANELS=[[205,300],[205,475]],O2_PANELS=[[1070,370],[1050,560]],COMMS_PANEL=[1030,760];
+var REACTOR_PANELS=MAPDATA.REACTOR_PANELS,O2_PANELS=MAPDATA.O2_PANELS,COMMS_PANEL=MAPDATA.COMMS_PANEL;
 function buildOccluders(){
  if(OCCLUDERS)return OCCLUDERS;
  var out=[];
@@ -1407,12 +1374,14 @@ function drawDoors(){
  DOORWAYS.forEach(function(a){drawDoor(a[0],a[1],a[2],a[3],a[4])});
 }
 function drawRoomWalls(){
- buildOccluders().slice(0,buildOccluders().length-BLOCKERS.length*4).forEach(function(w){
-  cx.save();cx.lineCap='round';cx.shadowColor='rgba(0,0,0,.35)';cx.shadowBlur=7;cx.shadowOffsetY=4;
-  cx.strokeStyle='#273337';cx.lineWidth=24;cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke();
-  cx.shadowBlur=0;cx.shadowOffsetY=0;cx.strokeStyle='#657775';cx.lineWidth=17;cx.stroke();
-  cx.strokeStyle='#aebbb3';cx.lineWidth=10;cx.stroke();cx.strokeStyle='rgba(238,247,235,.48)';cx.lineWidth=2;cx.stroke();cx.restore();
- });
+ // One clean, solid wall profile. The former 24/17/10/2px nested strokes
+ // produced the ugly multi-rail/grate look and visually inflated every room.
+ var walls=buildOccluders().slice(0,buildOccluders().length-BLOCKERS.length*4);
+ cx.save();cx.lineCap='butt';cx.lineJoin='round';
+ cx.shadowColor='rgba(0,0,0,.28)';cx.shadowBlur=4;cx.shadowOffsetY=2;
+ cx.strokeStyle='#263437';cx.lineWidth=15;
+ walls.forEach(function(w){cx.beginPath();cx.moveTo(w[0],w[1]);cx.lineTo(w[2],w[3]);cx.stroke()});
+ cx.restore();
 }
 function drawSkeld(){
  cx.save();cx.fillStyle='#172126';cx.fillRect(0,0,W,H);
