@@ -49,7 +49,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
 .menu-card{width:min(430px,100%);padding:24px;border:1px solid #ffffff1c;border-radius:24px;background:linear-gradient(145deg,#17263bdc,#0d1728ed);box-shadow:0 28px 90px #0008,inset 0 1px #ffffff13;display:flex;flex-direction:column;gap:12px}
 .field-label{align-self:flex-start;font-size:10px;font-weight:900;letter-spacing:2px;color:#8ea4c2}
 .menu-card input{width:100%;height:54px;border:1px solid #33445f;border-radius:13px;background:#081322;color:#f4f8ff;font-size:17px;letter-spacing:1px;outline:none}
-.menu-card input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #65e5ed1c}
+.menu-card input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #65e5ed1c}.custom-row{display:grid;grid-template-columns:1fr 1fr 48px;gap:9px;align-items:end}.custom-row label{display:flex;flex-direction:column;gap:7px;min-width:0}.custom-row select{width:100%;height:45px;padding:0 8px;border:1px solid #33445f;border-radius:11px;background:#081322;color:#eaf6ff;font:600 13px inherit;font-family:inherit}.mini-preview{height:45px;border:1px solid #ffffff24;border-radius:11px;background:#081322;display:grid;place-items:center}.mini-preview i{width:23px;height:28px;border-radius:12px 12px 8px 8px;background:#ef4444;box-shadow:inset 5px 0 5px #ffffff55,inset -5px 0 5px #0005;position:relative}
 #jc{text-transform:uppercase;letter-spacing:10px;font-weight:900;font-size:23px}
 .menu-card button{width:100%;border-radius:13px;min-height:58px;transition:transform .16s;display:flex;align-items:center;justify-content:center;gap:14px}
 .primary-action{justify-content:flex-start!important;padding:0 18px!important;background:linear-gradient(100deg,#69e7e4,#77a7ff);color:#081522;text-align:left;box-shadow:0 8px 28px #5bd7e533}
@@ -66,7 +66,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
 .copy-action{min-height:36px;padding:0 15px;background:#24435a;border:1px solid #47728a;color:#d7faff;font-size:10px;font-weight:900;letter-spacing:2px}
 .players-panel{width:min(560px,100%);padding:17px;border:1px solid #26364e;border-radius:18px;background:#0d1829d9}
 .panel-heading{display:flex;justify-content:space-between;color:#9eb2ce;font-size:10px;font-weight:900;letter-spacing:2px;margin-bottom:12px}
-.pl{min-height:42px;max-width:none;justify-content:flex-start}.chip{background:#17263a;color:#e9f2ff;border-radius:12px;padding:9px 13px}#lmsg{font-size:12px;margin-top:8px}
+.pl{min-height:42px;max-width:none;justify-content:flex-start;gap:8px}.player-chip{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 11px;border:1px solid #ffffff25;border-radius:12px;background:#17263a;color:#e9f2ff;font-size:12px;font-weight:800}.player-chip i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 10px currentColor}.kick-player{min-height:27px;padding:0 8px;border-radius:7px;background:#59283b;color:#ffb8c5;font-size:9px;font-weight:900;letter-spacing:1px}.chip{background:#17263a;color:#e9f2ff;border-radius:12px;padding:9px 13px}#lmsg{font-size:12px;margin-top:8px}
 #roomsettings h3{font-size:11px;letter-spacing:2px;color:#dceaff;margin:0 0 14px}#roomsettings h3 small{float:right;color:#8296b2;font-size:9px}
 #start{width:min(560px,100%);min-height:58px;border-radius:14px;background:linear-gradient(100deg,#67e5db,#7b9fff);color:#071522;font-size:14px;font-weight:1000;letter-spacing:2px;box-shadow:0 10px 30px #4fd5d533}
 #start:disabled{filter:grayscale(.7);opacity:.45}
@@ -82,7 +82,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
  <div class="brand-mark"><span class="brand-icon">J</span><span>JOHNNY <b>GAMES</b></span></div>
  <div class="home-title"><h1>JOHNNY <em>AMONG US</em></h1><div class="tagline">TRUST NO ONE. COMPLETE YOUR TASKS.</div></div>
  <div class="menu-card">
-  <label class="field-label" for="nm">CREWMATE NAME</label><input id="nm" maxlength="10" placeholder="Enter your name" autocomplete="off">
+  <label class="field-label" for="nm">CREWMATE NAME</label><input id="nm" maxlength="10" placeholder="Enter your name" autocomplete="off"><div class="custom-row"><label><span class="field-label">SUIT COLOUR</span><select id="colorPick"><option value="#ef4444">Red</option><option value="#3b82f6">Blue</option><option value="#22c55e">Green</option><option value="#eab308">Yellow</option><option value="#ec4899">Pink</option><option value="#f97316">Orange</option><option value="#a855f7">Purple</option><option value="#14b8a6">Cyan</option><option value="#e5e7eb">White</option><option value="#84cc16">Lime</option></select></label><label><span class="field-label">HEADWEAR</span><select id="hatPick"><option value="none">No hat</option><option value="cap">Cap</option><option value="crown">Crown</option><option value="antenna">Antenna</option><option value="halo">Halo</option><option value="flower">Flower</option></select></label><div class="mini-preview"><i id="previewBody"></i></div></div>
   <button id="host" class="primary-action"><span>＋</span><span><b>CREATE ROOM</b><small>Start a new lobby</small></span><i>↗</i></button>
   <div class="or-line"><span>OR JOIN A CREW</span></div>
   <label class="field-label" for="jc">ROOM CODE</label><input id="jc" maxlength="4" placeholder="A B C D" autocapitalize="characters" autocomplete="off">
@@ -115,6 +115,7 @@ var ambience=Array.from({length:54},function(_,i){return{x:(i*347)%W,y:(i*613)%H
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 var isHost=false,peer,conns={},hostConn,me='me',connectTimer=null,connectBusy=false;
+var playerColor=COL[0],playerHat='none';
 var roomCfg={imps:1,speed:1,cooldown:12000,tasks:3};
 var P={};            // id -> {name,col}
 var C={phase:'home',pos:{},bodies:[],done:0,total:0,role:'',tasks:[],mine:{},meet:null};
@@ -154,6 +155,8 @@ function sendTo(id,m){
  var c=conns[id];if(c&&c.open){try{c.send(m)}catch(e){}}
 }
 function nm(){return($('nm').value.trim()||'Crew').slice(0,10)}
+function readCustom(){playerColor=$('colorPick').value||COL[0];playerHat=$('hatPick').value||'none';$('previewBody').style.background=playerColor}
+$('colorPick').addEventListener('change',readCustom);$('hatPick').addEventListener('change',readCustom);readCustom();
 function makeCode(){var code='';for(var i=0;i<4;i++)code+=CH[Math.random()*CH.length|0];return code}
 function connectionLost(message){
  if(C.phase==='play'||C.phase==='meet'){alert(message);location.reload();return}
@@ -210,7 +213,7 @@ function beginHost(code,attempt){
  });
  peer.on('open',function(id){
   if(opened||!connectBusy)return;opened=true;stopConnectTimer();connectBusy=false;
-  isHost=true;me='host';P={host:{name:nm(),col:COL[0]}};
+  isHost=true;me='host';readCustom();P={host:{name:nm(),col:playerColor,hat:playerHat}};
   $('host').disabled=$('join').disabled=false;$('lobbyconnect').textContent='Room is live — share your code.';
   $('lmsg').textContent='Share the code with your friends. Waiting for players…';
   // Register the listener before advertising the room to the host.
@@ -228,7 +231,7 @@ $('host').onclick=function(){
  if(connectBusy)return;
  if(!window.Peer)return err('PeerJS did not load. Refresh the page and try again.');
  if(peer){try{peer.destroy()}catch(e){}peer=null}
- readRoomCfg();isHost=true;me='host';conns={};hostConn=null;P={host:{name:nm(),col:COL[0]}};HS=null;C.phase='lobby';
+ readRoomCfg();readCustom();isHost=true;me='host';conns={};hostConn=null;P={host:{name:nm(),col:playerColor,hat:playerHat}};HS=null;C.phase='lobby';
  var code=makeCode();
  $('code').textContent=code;show('lobby');lobbyUI();
  beginConnect('Starting room service…',30000,'Room creation timed out. Check your internet connection and try again.');
@@ -262,7 +265,7 @@ $('join').onclick=function(){
   hostConn.on('open',function(){
    if(!connectBusy)return;
    $('connectstate').textContent='Connected — waiting for the host to admit you…';
-   try{hostConn.send({t:'join',name:nm(),version:2})}
+   try{readCustom();hostConn.send({t:'join',name:nm(),col:playerColor,hat:playerHat,version:3})}
    catch(e){resetConnection('Could not send the join request. Try again.')}
   });
   hostConn.on('data',function(m){if(m&&typeof m==='object')onMsg(m)});
@@ -282,13 +285,14 @@ function handle(id,m){
   var used=Object.keys(P).map(function(k){return P[k].col});
   var available=COL.filter(function(c){return used.indexOf(c)<0});
   if(!available.length){sendTo(id,{t:'reject',reason:'This room is full.'});return}
-  P[id]={name:String(m.name||'Crew').slice(0,10),col:available[0]};
+  var wanted=String(m.col||'');P[id]={name:String(m.name||'Crew').slice(0,10),col:available.indexOf(wanted)>-1?wanted:available[0],hat:['none','cap','crown','antenna','halo','flower'].indexOf(m.hat)>-1?m.hat:'none'};
   sendTo(id,{t:'welcome',id:id});
   bcast({t:'lobby',P:P,cfg:roomCfg});return;
  }
+ if(m.t==='kick'&&isHost&&id===me&&C.phase==='lobby'){var target=String(m.id||'');if(!target||target===me||!P[target])return;sendTo(target,{t:'reject',reason:'The host removed you from this lobby.'});var kicked=conns[target];delete P[target];delete conns[target];if(kicked)try{kicked.close()}catch(e){}bcast({t:'lobby',P:P,cfg:roomCfg});return}
  if(!HS)return;var p=HS.p[id];if(!p)return;
  if(m.t==='in'){p.ix=m.x;p.iy=m.y}
- else if(m.t==='do'&&HS.phase==='play'&&p.alive&&p.role==='crew'&&p.tasks.indexOf(m.id)>-1&&p.done.indexOf(m.id)<0&&d(p,ST[m.id])<80){
+ else if(m.t==='do'&&HS.phase==='play'&&p.role==='crew'&&p.tasks.indexOf(m.id)>-1&&p.done.indexOf(m.id)<0&&d(p,ST[m.id])<80){
   p.done.push(m.id);HS.done++;sendTo(id,{t:'td',id:m.id});if(HS.done>=HS.total)endGame('crew')}
  else if(m.t==='kill'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.cd){
   var best=null,bd=KR;Object.keys(HS.p).forEach(function(k){var q=HS.p[k];if(q.alive&&q.role==='crew'&&d(p,q)<bd){bd=d(p,q);best=k}});
@@ -317,8 +321,8 @@ $('start').onclick=function(){
 };
 function tick(){
  if(!HS||HS.phase!=='play')return;
- Object.keys(HS.p).forEach(function(k){var p=HS.p[k];if(!p.alive)return;var l=Math.hypot(p.ix,p.iy);if(l>1){p.ix/=l;p.iy/=l}
-  move(p,p.ix*SPD*HS.cfg.speed*.05,p.iy*SPD*HS.cfg.speed*.05)});
+ Object.keys(HS.p).forEach(function(k){var p=HS.p[k];var l=Math.hypot(p.ix,p.iy);if(l>1){p.ix/=l;p.iy/=l}
+  var ghost=p.role==='crew'&&!p.alive;move(p,p.ix*SPD*HS.cfg.speed*(ghost?1.25:1)*.05,p.iy*SPD*HS.cfg.speed*(ghost?1.25:1)*.05)});
  bcast({t:'st',p:Object.keys(HS.p).map(function(k){var p=HS.p[k];return[k,p.x|0,p.y|0,p.alive?1:0,p.role==='imp'&&HS.bodies.length&&0?1:0]}),b:HS.bodies,dn:HS.done});
 }
 function move(p,dx,dy){
@@ -362,7 +366,7 @@ $('again').onclick=function(){bcast({t:'lobby',P:P})};
 /* ---------- client logic ---------- */
 function onMsg(m){
  if(m.t==='welcome'){me=m.id}
- else if(m.t==='reject'){resetConnection(m.reason||'The host rejected the connection.');}
+ else if(m.t==='reject'){var why=m.reason||'The host rejected the connection.';resetConnection(why);isHost=false;C.phase='home';show('home');err(why)}
  else if(m.t==='lobby'){
   stopConnectTimer();connectBusy=false;$('host').disabled=$('join').disabled=false;
   if(!isHost)$('connectstate').textContent='';
@@ -395,11 +399,12 @@ function showFx(label,color){var e=$('fx');e.textContent=label;e.style.color=col
 function lobbyUI(){
  var ids=Object.keys(P);$('playercount').textContent=String(ids.length).padStart(2,'0')+' / 10';$('roomsettings').style.display=isHost?'block':'none';
  if(isHost){$('cfgImps').value=String(roomCfg.imps);$('cfgSpeed').value=String(roomCfg.speed);$('cfgCooldown').value=String(roomCfg.cooldown);$('cfgTasks').value=String(roomCfg.tasks)}
- $('plist').innerHTML=ids.map(function(k){return'<span class="chip" style="background:'+P[k].col+'33;border-color:'+P[k].col+'">'+esc(P[k].name)+'</span>'}).join('');
+ $('plist').innerHTML=ids.map(function(k){var p=P[k];return'<span class="player-chip"><i style="background:'+p.col+';color:'+p.col+'"></i>'+esc(p.name)+(k===me?' <small>(YOU)</small>':'')+(isHost&&k!==me?' <button class="kick-player" data-kick="'+esc(k)+'">KICK</button>':'')+'</span>'}).join('');
  $('start').hidden=!isHost;$('start').disabled=connectBusy||ids.length<3||roomCfg.imps>=ids.length;
  $('lmsg').textContent=ids.length+' player'+(ids.length>1?'s':'')+(ids.length<3?' (need 3+)':'')+(isHost?'':' - waiting for host')+(roomCfg.imps>=ids.length?' · reduce impostors to start':'');
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+$('plist').addEventListener('click',function(e){var b=e.target.closest('[data-kick]');if(b&&isHost&&confirm('Kick this player from the lobby?'))toHost({t:'kick',id:b.getAttribute('data-kick')})});
 function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){return(C.mine[i]?'&#10003; ':'&#9675; ')+['Reactor','Engine','Comms','Medbay','Cargo','Shields'][i]}).join('<br>')}
 function meetUI(m){
  show('vote');$('vt').textContent=(m.why==='body'?'Body reported by ':'Emergency meeting by ')+P[m.by].name;
@@ -421,8 +426,8 @@ cv.addEventListener('pointermove',function(e){if(!joy||e.pointerId!==joy.id)retu
 function jend(e){if(joy&&e.pointerId===joy.id){joy=null;jv={x:0,y:0}}}
 cv.addEventListener('pointerup',jend);cv.addEventListener('pointercancel',jend);
 var holdT=0,holdId=-1;
-function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew'||!p.al)return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i];if(!C.mine[s]&&Math.hypot(p.x-ST[s][0],p.y-ST[s][1])<80)return s}return-1}
-$('use').addEventListener('pointerdown',function(e){e.preventDefault();var p=C.pos[me];if(!p||!p.al)return;var t=nearTask();
+function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew')return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i];if(!C.mine[s]&&Math.hypot(p.x-ST[s][0],p.y-ST[s][1])<80)return s}return-1}
+$('use').addEventListener('pointerdown',function(e){e.preventDefault();var p=C.pos[me];if(!p||(!p.al&&C.role!=='crew'))return;var t=nearTask();
  if(t>-1)startTask(t);else if(Math.hypot(p.x-TBL[0],p.y-TBL[1])<110)toHost({t:'meet'});else if(C.sabotageUntil>Date.now()){for(var z=0;z<PANELS.length;z++)if(Math.hypot(p.x-PANELS[z][0],p.y-PANELS[z][1])<75){toHost({t:'repair',panel:z});break}}});
 function endHold(){holdId=-1;$('hold').style.display='none'}
 $('taskcancel').onclick=function(){closeTask()};
@@ -494,6 +499,7 @@ function body(x,y,col,dead){
  cx.strokeStyle='rgba(255,255,255,.7)';cx.lineWidth=1.5;cx.beginPath();cx.ellipse(2,-13,4,1.5,-.35,0,Math.PI*2);cx.stroke();
  cx.restore();
 }
+function drawHat(x,y,hat){if(!hat||hat==='none')return;cx.save();cx.translate(x,y-23);cx.lineWidth=2;cx.strokeStyle='#172033';if(hat==='cap'){cx.fillStyle='#e7eaf0';cx.beginPath();cx.roundRect(-12,-9,22,9,4);cx.fill();cx.stroke();cx.fillRect(4,-4,11,3)}else if(hat==='crown'){cx.fillStyle='#fbbf24';cx.beginPath();cx.moveTo(-12,0);cx.lineTo(-10,-13);cx.lineTo(-3,-6);cx.lineTo(1,-15);cx.lineTo(6,-6);cx.lineTo(12,-12);cx.lineTo(12,0);cx.closePath();cx.fill();cx.stroke()}else if(hat==='antenna'){cx.strokeStyle='#cbd5e1';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,-2);cx.lineTo(2,-15);cx.stroke();cx.fillStyle='#fb7185';cx.beginPath();cx.arc(2,-18,4,0,7);cx.fill()}else if(hat==='halo'){cx.strokeStyle='#fde68a';cx.lineWidth=4;cx.shadowColor='#facc15';cx.shadowBlur=9;cx.beginPath();cx.ellipse(0,-12,13,4,0,0,7);cx.stroke()}else if(hat==='flower'){for(var i=0;i<5;i++){var a=i*Math.PI*2/5;cx.fillStyle='#f9a8d4';cx.beginPath();cx.arc(Math.cos(a)*6,-10+Math.sin(a)*6,4,0,7);cx.fill()}cx.fillStyle='#facc15';cx.beginPath();cx.arc(0,-10,3,0,7);cx.fill()}cx.restore()}
 function shade(hex,amt){
  var n=parseInt(hex.slice(1),16),r=Math.max(0,Math.min(255,(n>>16)+amt)),g=Math.max(0,Math.min(255,((n>>8)&255)+amt)),b=Math.max(0,Math.min(255,(n&255)+amt));
  return'rgb('+r+','+g+','+b+')';
@@ -534,12 +540,12 @@ function frame(){
  C.bodies.forEach(function(b){body(b.x,b.y,P[b.id]?P[b.id].col:'#999',1)});
  if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=8;cx.shadowColor='#ff1744';cx.shadowBlur=24;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
  Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;
-  cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,0);cx.globalAlpha=1;cx.fillStyle='#fff';cx.font='bold 13px Arial';cx.textAlign='center';cx.fillText(P[k].name,q.x,q.y-38)});
+  cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#fff';cx.font='bold 13px Arial';cx.textAlign='center';cx.fillText(P[k].name,q.x,q.y-38)});
  cx.setTransform(1,0,0,1,0,0);
  if(p.al){var r=(C.role==='imp'?330:240)*sc;if(C.role!=='imp'&&C.sabotageUntil>Date.now())r*=.48;var g=cx.createRadialGradient(cv.width/2,cv.height/2,r*.45,cv.width/2,cv.height/2,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.96)');cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height)}
  // buttons
  var t=nearTask(),nearT=Math.hypot(p.x-TBL[0],p.y-TBL[1])<110,u=$('use');
- u.disabled=!p.al||(t<0&&!nearT);u.textContent=t>-1?'TASK':(nearT?'MEETING':'USE');
+ u.disabled=(!p.al&&C.role!=='crew')||(t<0&&!nearT);u.textContent=t>-1?'TASK':(nearT?'MEETING':'USE');
  var nb=C.bodies.some(function(b){return Math.hypot(p.x-b.x,p.y-b.y)<110});$('rep').disabled=!p.al||!nb;
  var k=$('kill');k.style.display=C.role==='imp'?'block':'none';var vb=$('vent');vb.style.display=C.role==='imp'?'block':'none';var sb=$('sab');sb.style.display=C.role==='imp'?'block':'none';var vd=Math.max(0,Math.ceil((ventAt-Date.now())/1000)),sd=Math.max(0,Math.ceil((sabAt-Date.now())/1000));vb.textContent=vd?'VENT '+vd:'VENT';vb.disabled=!p.al||vd>0||!VENTS.some(function(v){return Math.hypot(p.x-v[0],p.y-v[1])<62});sb.textContent=sd?'SAB '+sd:'SABOTAGE';sb.disabled=!p.al||sd>0||C.sabotageUntil>Date.now();var cd=Math.max(0,Math.ceil((killAt-Date.now())/1000));k.textContent=cd>0?'KILL '+cd:'KILL';k.disabled=!p.al||cd>0;
  
