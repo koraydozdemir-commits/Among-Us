@@ -1407,13 +1407,11 @@ function buildMapWalls(){
  MAP_WALL_SEGMENTS=out;return out;
 }
 function buildOccluders(){
+ // Only structural room boundaries cast vision shadows.
+ // Furniture, consoles, crates, beds and other in-room props never occlude vision.
  if(OCCLUDERS)return OCCLUDERS;
- var out=buildMapWalls().slice();
- BLOCKERS.forEach(function(b){
-  var x=b[0],y=b[1],r=x+b[2],bt=y+b[3];
-  out.push([x,y,r,y],[r,y,r,bt],[r,bt,x,bt],[x,bt,x,y]);
- });
- OCCLUDERS=out;return out;
+ OCCLUDERS=buildMapWalls().slice();
+ return OCCLUDERS;
 }
 function raySegmentDistance(px,py,dx,dy,line){
  var sx=line[2]-line[0],sy=line[3]-line[1],qx=line[0]-px,qy=line[1]-py,den=dx*sy-dy*sx;
@@ -1438,20 +1436,37 @@ function raycastVisibility(p,radius){
  return points;
 }
 function drawVision(p){
+ // Strong Among Us-style darkness: everything beyond the wall-clipped
+ // vision polygon is almost black, while the player's immediate area stays clear.
  var vision=(C.role==='imp'?440:390)*(C.vision||1);
  if(C.sabotage&&C.sabotage.type==='lights')vision=C.role==='imp'?190:135;
  var pts=raycastVisibility(p,vision),sx=sc;
- cx.save();cx.setTransform(1,0,0,1,0,0);cx.beginPath();cx.rect(0,0,cv.width,cv.height);
+ cx.save();
+ cx.setTransform(1,0,0,1,0,0);
+ cx.beginPath();
+ cx.rect(0,0,cv.width,cv.height);
  if(pts.length){
   cx.moveTo((pts[0][0]-p.x)*sx+cv.width/2,(pts[0][1]-p.y)*sx+cv.height/2);
   for(var i=1;i<pts.length;i++)cx.lineTo((pts[i][0]-p.x)*sx+cv.width/2,(pts[i][1]-p.y)*sx+cv.height/2);
   cx.closePath();
  }
- cx.clip('evenodd');cx.fillStyle='rgba(1,5,12,.42)';cx.fillRect(0,0,cv.width,cv.height);cx.restore();
- cx.save();cx.setTransform(1,0,0,1,0,0);
- var g=cx.createRadialGradient(cv.width/2,cv.height/2,4,cv.width/2,cv.height/2,vision*sx);
- g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.8,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.1)');
- cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height);cx.restore();
+ // Even-odd clipping selects the area OUTSIDE the visible region.
+ cx.clip('evenodd');
+ cx.fillStyle='rgba(0,2,7,.90)';
+ cx.fillRect(0,0,cv.width,cv.height);
+ cx.restore();
+
+ // A restrained falloff at the edge of vision prevents a hard spotlight edge.
+ cx.save();
+ cx.setTransform(1,0,0,1,0,0);
+ var inner=Math.max(12,vision*sx*.68),outer=Math.max(inner+1,vision*sx);
+ var g=cx.createRadialGradient(cv.width/2,cv.height/2,inner,cv.width/2,cv.height/2,outer);
+ g.addColorStop(0,'rgba(0,0,0,0)');
+ g.addColorStop(.72,'rgba(0,0,0,.08)');
+ g.addColorStop(1,'rgba(0,0,0,.48)');
+ cx.fillStyle=g;
+ cx.fillRect(0,0,cv.width,cv.height);
+ cx.restore();
 }
 function drawDoors(){
  DOORWAYS.forEach(function(a){
