@@ -351,7 +351,24 @@ var HALLS=[
 var ST=[[150,400],[300,205],[565,345],[565,565],[1045,520],[1170,660]];
 var TBL=[820,205];
 var TASK_NAMES=['REACTOR','UPPER ENGINE','MEDBAY','ELECTRICAL','ADMIN','SHIELDS'];
-var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
+var VENTS=[
+ [1000,540],  // Admin
+ [1215,485],  // Right hallway
+ [960,335],   // Cafeteria
+ [615,565],   // Electrical
+ [350,205],   // Upper Engine
+ [420,380],   // Security
+ [610,350],   // MedBay
+ [1150,185],  // Weapons
+ [165,455],   // Reactor lower
+ [165,330],   // Reactor upper
+ [350,615],   // Lower Engine
+ [1370,350],  // Navigation upper
+ [1370,450],  // Navigation lower
+ [1170,660]   // Shields
+];
+// Each vent leads only to its real Skeld partner/loop, not to the next vent globally.
+var VENT_NEXT=[2,0,1,5,9,6,3,11,10,4,8,7,13,12];
 var PANELS=[[535,545],[620,600]];
 // Furniture collision rectangles are in the same world coordinates as the map.
 var BLOCKERS=[
@@ -688,7 +705,7 @@ function handle(id,m){
  else if(m.t==='kill'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.cd){
   var best=null,bd=KR;Object.keys(HS.p).forEach(function(k){var q=HS.p[k];if(q.alive&&q.role==='crew'&&d(p,q)<bd){bd=d(p,q);best=k}});
   if(best){var q=HS.p[best];q.alive=false;HS.bodies.push({id:best,x:q.x,y:q.y});bcast({t:'killfx',x:q.x,y:q.y,col:P[best].col});p.x=q.x;p.y=q.y;p.cd=Date.now()+HS.cfg.cooldown;sendTo(id,{t:'cd',until:p.cd});if(!checkWin())return}}
- else if(m.t==='vent'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.vcd){var vi=-1;for(var z=0;z<VENTS.length;z++)if(d(p,{x:VENTS[z][0],y:VENTS[z][1]})<62){vi=z;break}if(vi>-1){var nv=VENTS[(vi+1)%VENTS.length];p.x=nv[0];p.y=nv[1];p.vcd=Date.now()+6500;sendTo(id,{t:'ventcd',until:p.vcd});bcast({t:'ventfx',x:p.x,y:p.y})}}
+ else if(m.t==='vent'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.vcd){var vi=-1;for(var z=0;z<VENTS.length;z++)if(d(p,{x:VENTS[z][0],y:VENTS[z][1]})<62){vi=z;break}if(vi>-1){var nv=VENTS[VENT_NEXT[vi]];p.x=nv[0];p.y=nv[1];p.vcd=Date.now()+6500;sendTo(id,{t:'ventcd',until:p.vcd});bcast({t:'ventfx',x:p.x,y:p.y})}}
  else if(m.t==='sab'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.scd){HS.sabotageUntil=Date.now()+16000;HS.repairs={};p.scd=Date.now()+28000;bcast({t:'sabotage',until:HS.sabotageUntil});sendTo(id,{t:'sabcd',until:p.scd})}
  else if(m.t==='repair'&&HS.phase==='play'&&p.alive&&p.role==='crew'&&HS.sabotageUntil>Date.now()){var pi=Number(m.panel);if((pi===0||pi===1)&&d(p,{x:PANELS[pi][0],y:PANELS[pi][1]})<75){HS.repairs=HS.repairs||{};HS.repairs[pi]=1;if(HS.repairs[0]&&HS.repairs[1]){HS.sabotageUntil=0;HS.repairs={};bcast({t:'repaired'})}}}
  else if(m.t==='rep'&&HS.phase==='play'&&p.alive&&HS.bodies.some(function(b){return d(p,b)<110}))startMeet(id,'body');
