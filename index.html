@@ -129,7 +129,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
 <div class="scr" id="vote" hidden><h2 id="vt" style="margin:0"></h2><div id="vopts" class="row" style="max-width:640px"></div><div id="vtime"></div></div>
 <div class="scr" id="end" hidden><h1 id="et"></h1><div id="es" style="color:#9aa"></div><button id="again" hidden>Back to lobby</button></div>
 
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){'use strict';
 var $=function(i){return document.getElementById(i)};
@@ -141,6 +141,98 @@ var ST=[[200,180],[1400,180],[200,820],[1400,820],[800,120],[800,880]],TBL=[800,
 var VENTS=[[540,180],[1060,180],[540,820],[1060,820]],PANELS=[[690,390],[910,610]];
 var ambience=Array.from({length:54},function(_,i){return{x:(i*347)%W,y:(i*613)%H,r:1+(i%3),phase:i*.73}});
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+/* Supabase Realtime transport. The host remains authoritative; room traffic is
+   sent over a single room channel rather than depending on public PeerJS IDs. */
+var SB_URL='https://wnxauvllhjklhpjksvuz.supabase.co';
+var SB_KEY='sb_publishable_kTrhj6QAHhLLrdva03Neuw_21MKNymV';
+var sbClient=window.supabase.createClient(SB_URL,SB_KEY);
+function EventHub(){this.events={}}
+EventHub.prototype.on=function(n,fn){(this.events[n]||(this.events[n]=[])).push(fn);return this};
+EventHub.prototype.emit=function(n,v){(this.events[n]||[]).slice().forEach(function(fn){try{fn(v)}catch(e){console.error(e)}})};
+function RealtimeConn(owner,id,remote){
+ EventHub.call(this);this.owner=owner;this.peer=id;this.remote=remote;this.open=true;this.closed=false;
+}
+RealtimeConn.prototype=Object.create(EventHub.prototype);
+RealtimeConn.prototype.send=function(data){
+ if(this.closed||!this.owner.channel)return;
+ this.owner.sendPacket({kind:'data',from:this.owner.isHost?'host':this.owner.id,to:this.peer,data:data});
+};
+RealtimeConn.prototype.close=function(){
+ if(this.closed)return;this.closed=true;this.open=false;
+ if(this.owner.isHost){this.owner.connections.delete(this.peer);this.emit('close')}
+ else if(this.owner.channel){this.owner.sendPacket({kind:'leave',from:this.owner.id,to:'host'});this.emit('close')}
+};
+function SupabasePeer(idOrOptions){
+ EventHub.call(this);this.isHost=typeof idOrOptions==='string';this.id=this.isHost?idOrOptions:('p'+Math.random().toString(36).slice(2,11));this.channel=null;this.connections=new Map();this.destroyed=false;this.room='';
+ var self=this;
+ if(this.isHost)this.openHost();
+ else setTimeout(function(){if(!self.destroyed)self.emit('open',self.id)},0);
+}
+SupabasePeer.prototype=Object.create(EventHub.prototype);
+SupabasePeer.prototype.openHost=function(){
+ var self=this,code=this.id.replace(/^vcrew-/,'');
+ this.room=code;this.channel=sbClient.channel('ja-room-'+code,{config:{broadcast:{ack:true,self:false},presence:{key:'host'}}});
+ this.channel.on('broadcast',{event:'packet'},function(msg){self.receive(msg&&msg.payload)});
+ this.channel.subscribe(function(status){
+  if(self.destroyed)return;
+  if(status==='SUBSCRIBED'){
+   var state=self.channel.presenceState();
+   if(state.host&&state.host.length){self.emit('error',{type:'unavailable-id'});self.destroy();return}
+   self.channel.track({role:'host',online:true}).then(function(){
+    if(!self.destroyed)self.emit('open',self.id);
+   }).catch(function(){self.emit('error',{type:'network'});});
+  }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+   self.emit('error',{type:'network'});
+  }
+ });
+};
+SupabasePeer.prototype.sendPacket=function(packet){
+ if(!this.channel||this.destroyed)return;
+ this.channel.send({type:'broadcast',event:'packet',payload:packet}).catch(function(e){console.warn('Realtime send failed',e)});
+};
+SupabasePeer.prototype.receive=function(packet){
+ if(!packet||this.destroyed)return;
+ if(this.isHost){
+  if(packet.kind==='join'){
+   if(this.connections.has(packet.from))return;
+   var c=new RealtimeConn(this,packet.from,true);this.connections.set(packet.from,c);this.emit('connection',c);
+  }else if(packet.kind==='data'&&packet.to==='host'){
+   var c1=this.connections.get(packet.from);if(c1&&!c1.closed)c1.emit('data',packet.data);
+  }else if(packet.kind==='leave'){
+   var c2=this.connections.get(packet.from);if(c2&&!c2.closed){c2.closed=true;c2.open=false;this.connections.delete(packet.from);c2.emit('close')}
+  }
+ }else if(packet.to===this.id&&packet.from==='host'){
+  if(this.clientConnection&&!this.clientConnection.closed)this.clientConnection.emit('data',packet.data);
+ }
+};
+SupabasePeer.prototype.connect=function(target){
+ var self=this,code=String(target||'').replace(/^vcrew-/,'');
+ var c=new RealtimeConn(this,'host',false);c.open=false;this.clientConnection=c;this.room=code;
+ this.channel=sbClient.channel('ja-room-'+code,{config:{broadcast:{ack:true,self:false},presence:{key:this.id}}});
+ this.channel.on('broadcast',{event:'packet'},function(msg){self.receive(msg&&msg.payload)});
+ this.channel.subscribe(function(status){
+  if(self.destroyed)return;
+  if(status==='SUBSCRIBED'){
+   var state=self.channel.presenceState();
+   if(!state.host||!state.host.length){self.emit('error',{type:'peer-unavailable'});return}
+   c.open=true;self.sendPacket({kind:'join',from:self.id,to:'host'});
+   setTimeout(function(){if(!self.destroyed&&c.open)c.emit('open')},100);
+  }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+   self.emit('error',{type:'network'});
+  }
+ });
+ return c;
+};
+SupabasePeer.prototype.reconnect=function(){if(this.channel&&!this.destroyed){try{this.channel.subscribe()}catch(e){this.emit('error',{type:'network'})}}};
+SupabasePeer.prototype.destroy=function(){
+ if(this.destroyed)return;this.destroyed=true;
+ if(this.clientConnection&&!this.clientConnection.closed){this.clientConnection.closed=true;this.clientConnection.open=false}
+ if(this.channel){try{sbClient.removeChannel(this.channel)}catch(e){}this.channel=null}
+ this.connections.forEach(function(c){c.closed=true;c.open=false;c.emit('close')});this.connections.clear();
+ this.emit('close');
+};
+window.Peer=SupabasePeer;
 
 var isHost=false,peer,conns={},hostConn,me='me',connectTimer=null,connectBusy=false;
 var playerColor=COL[0],playerHat='none';
