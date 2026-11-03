@@ -329,7 +329,7 @@ var HALLS=[
  [[465,425],[535,425],[535,510],[465,510]],
  [[370,600],[485,600],[485,670],[370,670]]
 ];
-var ST=[[160,400],[300,205],[575,340],[570,560],[985,500],[1170,655]];
+var ST=[[205,300],[235,265],[575,425],[570,560],[1050,520],[1170,655]];
 var TBL=[820,205];
 var TASK_NAMES=['REACTOR','UPPER ENGINE','MEDBAY','ELECTRICAL','ADMIN','SHIELDS'];
 var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
@@ -338,7 +338,7 @@ var PANELS=[[535,545],[620,600]];
 var BLOCKERS=[
  [700,100,82,55],[860,100,82,55],[775,185,82,55],[700,270,82,55],[860,270,82,55],
  [520,285,42,90],[610,285,42,90],[545,365,90,28],
- [950,465,85,64],[1090,125,70,55],[1320,340,75,70],
+ [950,465,85,64],[1080,145,120,80],[1320,340,75,70],[112,340,76,110],
  [500,490,44,40],[600,490,44,40],[500,595,44,40],[600,595,44,40],
  [720,600,62,58],[835,600,62,58],[720,710,62,58],[835,710,62,58],
  [930,680,65,40],[1015,690,65,40],[1125,585,60,42],[1190,650,42,52],
@@ -1000,7 +1000,7 @@ function drawFurniture(){
  drawBed(535,325);drawBed(615,325);drawConsole(580,410,82,34,'#8ce4d8');
  cx.save();cx.strokeStyle='#9fe8e0';cx.lineWidth=5;cx.shadowColor='#7cefe2';cx.shadowBlur=14;cx.beginPath();cx.ellipse(580,370,55,25,0,0,Math.PI*2);cx.stroke();cx.restore();
  // Cafeteria: five unmistakable blue round tables
- [[740,125],[890,125],[815,210],[740,295],[890,295]].forEach(function(p){drawTable(p[0],p[1],43,29)});
+ [[740,125],[890,125],[740,295],[890,295]].forEach(function(p){drawTable(p[0],p[1],43,29)});
  // Weapons cannon and O2 equipment
  cx.save();cx.translate(1140,185);cx.shadowColor='#000b';cx.shadowBlur=12;cx.fillStyle='#405a67';cx.strokeStyle='#c1d1c8';cx.lineWidth=5;cx.beginPath();cx.roundRect(-58,-38,116,76,15);cx.fill();cx.stroke();cx.fillStyle='#1a3547';cx.beginPath();cx.arc(0,0,25,0,7);cx.fill();cx.strokeStyle='#80d8df';cx.lineWidth=5;cx.beginPath();cx.arc(0,0,15,0,7);cx.stroke();cx.restore();
  drawConsole(1050,345,75,40,'#76dfce');drawConsole(1090,395,55,32);
