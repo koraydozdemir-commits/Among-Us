@@ -71,6 +71,29 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
 #start{width:min(560px,100%);min-height:58px;border-radius:14px;background:linear-gradient(100deg,#67e5db,#7b9fff);color:#071522;font-size:14px;font-weight:1000;letter-spacing:2px;box-shadow:0 10px 30px #4fd5d533}
 #start:disabled{filter:grayscale(.7);opacity:.45}
 @media(max-width:520px){.menu-card{padding:19px}.home-title h1{letter-spacing:-1px}.connection-notes{gap:10px;font-size:8px}.lobby-heading{margin-top:8px}}
+/* Free-roam lobby: keep the dropship clear and make room controls optional. */
+#lobby{display:block!important;overflow:hidden;padding:0;pointer-events:none;background:transparent}
+#lobby .lobby-hud{position:absolute;inset:0;pointer-events:none}
+.lobby-quickbar{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;pointer-events:auto}
+.quick-room{display:flex;align-items:center;gap:9px;padding:11px 15px;border:1px solid #8edfff35;border-radius:14px;background:#071827dc;backdrop-filter:blur(12px);box-shadow:0 8px 25px #0007;color:#9fb8d2;font-size:10px;font-weight:900;letter-spacing:1.5px}
+.quick-room b{color:#8ff8f0;font-size:19px;letter-spacing:5px}
+.quick-room #quickcount{padding-left:7px;border-left:1px solid #ffffff25;color:#dcecff;letter-spacing:1px}
+.quick-dot{width:8px;height:8px;border-radius:50%;background:#5ee5a4;box-shadow:0 0 12px #5ee5a4}
+#menuToggle,#menuClose{min-height:43px;padding:0 16px;border:1px solid #8edfff44;border-radius:12px;background:#10253bdd;color:#e9f8ff;font-size:11px;font-weight:900;letter-spacing:1.5px;box-shadow:0 8px 25px #0007;pointer-events:auto}
+.lobby-menu{position:absolute;top:68px;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 24px));max-height:calc(100% - 155px);overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid #8edfff35;border-radius:20px;background:#071321ed;backdrop-filter:blur(18px);box-shadow:0 22px 70px #000b;pointer-events:auto}
+.lobby-menu[hidden]{display:none}
+.menu-head{display:flex;justify-content:space-between;align-items:center;padding:4px 3px 8px}
+.menu-head h2{margin:5px 0;font-size:25px;letter-spacing:1px}.menu-head p{margin:0;color:#9aadc4;font-size:12px}
+#menuClose{width:42px;padding:0;font-size:17px}
+.lobby-menu .code-panel,.lobby-menu .players-panel{width:100%;padding:14px;border-radius:14px}
+.lobby-menu #code{min-height:48px;font-size:43px}
+.lobby-menu .copy-action{min-height:32px}
+.lobby-menu .players-panel{padding:13px}
+.lobby-bottom{position:absolute;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:center;pointer-events:none}
+#start{width:min(560px,100%);pointer-events:auto;box-shadow:0 10px 35px #0009,0 0 25px #4fd5d533}
+#waitStart{padding:15px 22px;border:1px solid #8edfff35;border-radius:14px;background:#071827dc;color:#c7e8ff;font-size:11px;font-weight:900;letter-spacing:2px;backdrop-filter:blur(12px);pointer-events:auto}
+@media(max-width:520px){.lobby-menu{top:66px;max-height:calc(100% - 145px);padding:11px}.lobby-menu .settinggrid{grid-template-columns:1fr 1fr}.quick-room{gap:6px;padding:9px 10px;font-size:9px}.quick-room b{font-size:16px}.lobby-bottom{left:12px;right:12px}}
+
 </style></head><body>
 <canvas id="cv"></canvas>
 <div id="hud"><div>Role: <span id="role"></span><div id="tl" style="font-weight:400;font-size:14px;margin-top:4px"></div></div><div>Tasks<div id="bar"><i></i></div></div></div>
@@ -82,7 +105,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
  <div class="brand-mark"><span class="brand-icon">J</span><span>JOHNNY <b>GAMES</b></span></div>
  <div class="home-title"><h1>JOHNNY <em>AMONG US</em></h1><div class="tagline">TRUST NO ONE. COMPLETE YOUR TASKS.</div></div>
  <div class="menu-card">
-  <label class="field-label" for="nm">CREWMATE NAME</label><input id="nm" maxlength="10" placeholder="Enter your name" autocomplete="off"><div class="custom-row"><label><span class="field-label">SUIT COLOUR</span><select id="colorPick"><option value="#ef4444">Red</option><option value="#3b82f6">Blue</option><option value="#22c55e">Green</option><option value="#eab308">Yellow</option><option value="#ec4899">Pink</option><option value="#f97316">Orange</option><option value="#a855f7">Purple</option><option value="#14b8a6">Cyan</option><option value="#e5e7eb">White</option><option value="#84cc16">Lime</option></select></label><label><span class="field-label">HEADWEAR</span><select id="hatPick"><option value="none">No hat</option><option value="cap">Cap</option><option value="crown">Crown</option><option value="antenna">Antenna</option><option value="halo">Halo</option><option value="flower">Flower</option></select></label><div class="mini-preview"><i id="previewBody"></i></div></div>
+  <label class="field-label" for="nm">CREWMATE NAME</label><input id="nm" maxlength="10" placeholder="Enter your name" autocomplete="off"><div class="custom-row"><label><span class="field-label">SUIT COLOUR</span><select id="colorPick"><option value="#ef4444">Red</option><option value="#3b82f6">Blue</option><option value="#22c55e">Green</option><option value="#eab308">Yellow</option><option value="#ec4899">Pink</option><option value="#f97316">Orange</option><option value="#a855f7">Purple</option><option value="#14b8a6">Cyan</option><option value="#e5e7eb">White</option><option value="#84cc16">Lime</option></select></label><label><span class="field-label">HEADWEAR</span><select id="hatPick"><option value="none">No hat</option><option value="cap">Cap</option><option value="crown">Crown</option><option value="antenna">Antenna</option><option value="halo">Halo</option><option value="flower">Flower</option><option value="tophat">Top hat</option></select></label><div class="mini-preview"><i id="previewBody"></i></div></div>
   <button id="host" class="primary-action"><span>＋</span><span><b>CREATE ROOM</b><small>Start a new lobby</small></span><i>↗</i></button>
   <div class="or-line"><span>OR JOIN A CREW</span></div>
   <label class="field-label" for="jc">ROOM CODE</label><input id="jc" maxlength="4" placeholder="A B C D" autocapitalize="characters" autocomplete="off">
@@ -92,11 +115,16 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
  <div id="err" role="status" style="color:#ff8b9b;min-height:22px"></div><div id="connectstate" style="min-height:20px;color:#a9c7e8;font-size:13px"></div>
 </div>
 <div class="scr" id="lobby" hidden>
- <div class="lobby-top"><div class="brand-mark"><span class="brand-icon">J</span><span>JOHNNY <b>GAMES</b></span></div><span class="room-status"><i></i> ROOM LOBBY</span></div>
- <div class="lobby-heading"><span class="eyebrow">PRE-FLIGHT · DROP-SHIP 01</span><h2>CREW ASSEMBLY</h2><p>Walk around the dropship while your crew joins</p></div><div class="walk-hint">WASD / ARROWS TO MOVE · DRAG ON THE LEFT SIDE ON MOBILE</div>
- <div class="code-panel"><div class="code-caption">YOUR JOIN CODE</div><div id="code"></div><button id="copycode" class="copy-action" type="button">COPY CODE <span>▣</span></button><div id="lobbyconnect" class="lobby-connect" style="min-height:18px;color:#a9c7e8;font-size:13px"></div></div>
- <section class="players-panel"><div class="panel-heading"><span>CREW MANIFEST</span><span id="playercount">01 / 10</span></div><div class="pl" id="plist"></div><div id="lmsg" style="color:#9aa"></div></section>
- <section id="roomsettings" style="display:none;width:min(560px,100%);padding:18px;border:1px solid #28364d;border-radius:18px;background:#101a2b;text-align:left"><h3>ROOM SETTINGS <small>HOST ONLY</small></h3><div class="settinggrid"><label>Impostors<select id="cfgImps"><option value="1">1</option><option value="2">2</option></select></label><label>Speed<select id="cfgSpeed"><option value=".8">Slow</option><option value="1" selected>Normal</option><option value="1.25">Fast</option><option value="1.5">Very fast</option></select></label><label>Kill cooldown<select id="cfgCooldown"><option value="8000">8 sec</option><option value="12000" selected>12 sec</option><option value="18000">18 sec</option><option value="25000">25 sec</option></select></label><label>Tasks per crewmate<select id="cfgTasks"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label><label>Crew vision<select id="cfgVision"><option value=".65">Narrow</option><option value="1" selected>Normal</option><option value="1.35">Wide</option></select></label></div></section><button id="start" hidden>START MISSION <span>→</span></button>
+ <div class="lobby-hud">
+  <div class="lobby-quickbar"><div class="quick-room"><span class="quick-dot"></span><span>ROOM</span><b id="quickcode">----</b><span id="quickcount">1 / 10</span></div><button id="menuToggle" type="button">☰ MENU</button></div>
+  <section id="lobbyMenu" class="lobby-menu" hidden>
+   <div class="menu-head"><div><span class="eyebrow">PRE-FLIGHT · DROP-SHIP 01</span><h2>CREW ASSEMBLY</h2><p>Manage your room before launch</p></div><button id="menuClose" type="button" aria-label="Close menu">✕</button></div>
+   <div class="code-panel"><div class="code-caption">YOUR JOIN CODE</div><div id="code"></div><button id="copycode" class="copy-action" type="button">COPY CODE <span>▣</span></button><div id="lobbyconnect" class="lobby-connect" style="min-height:18px;color:#a9c7e8;font-size:13px"></div></div>
+   <section class="players-panel"><div class="panel-heading"><span>CREW MANIFEST</span><span id="playercount">01 / 10</span></div><div class="pl" id="plist"></div><div id="lmsg" style="color:#9aa"></div></section>
+   <section id="roomsettings" style="display:none;width:100%;padding:18px;border:1px solid #28364d;border-radius:18px;background:#101a2b;text-align:left"><h3>ROOM SETTINGS <small>HOST ONLY</small></h3><div class="settinggrid"><label>Impostors<select id="cfgImps"><option value="1">1</option><option value="2">2</option></select></label><label>Speed<select id="cfgSpeed"><option value=".8">Slow</option><option value="1" selected>Normal</option><option value="1.25">Fast</option><option value="1.5">Very fast</option></select></label><label>Kill cooldown<select id="cfgCooldown"><option value="8000">8 sec</option><option value="12000" selected>12 sec</option><option value="18000">18 sec</option><option value="25000">25 sec</option></select></label><label>Tasks per crewmate<select id="cfgTasks"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label><label>Crew vision<select id="cfgVision"><option value=".65">Narrow</option><option value="1" selected>Normal</option><option value="1.35">Wide</option></select></label></div></section>
+  </section>
+  <div class="lobby-bottom"><div id="waitStart">WAITING FOR HOST TO START</div><button id="start" hidden>START MISSION <span>→</span></button></div>
+ </div>
 </div>
 <div class="scr" id="vote" hidden><h2 id="vt" style="margin:0"></h2><div id="vopts" class="row" style="max-width:640px"></div><div id="vtime"></div></div>
 <div class="scr" id="end" hidden><h1 id="et"></h1><div id="es" style="color:#9aa"></div><button id="again" hidden>Back to lobby</button></div>
@@ -222,6 +250,7 @@ function beginHost(code,attempt){
   bcast({t:'lobby',P:P,cfg:roomCfg});
  });
 }
+$('menuToggle').onclick=function(){$('lobbyMenu').hidden=!$('lobbyMenu').hidden};$('menuClose').onclick=function(){$('lobbyMenu').hidden=true};
 $('copycode').onclick=function(){
  var value=$('code').textContent.trim();if(!value)return;
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(value).then(function(){$('copycode').innerHTML='COPIED <span>✓</span>'}).catch(function(){$('copycode').textContent=value})}
@@ -231,7 +260,7 @@ $('host').onclick=function(){
  if(connectBusy)return;
  if(!window.Peer)return err('PeerJS did not load. Refresh the page and try again.');
  if(peer){try{peer.destroy()}catch(e){}peer=null}
- readRoomCfg();readCustom();isHost=true;me='host';conns={};hostConn=null;P={host:{name:nm(),col:playerColor,hat:playerHat,x:800,y:570}};HS=null;C.phase='lobby';
+ readRoomCfg();readCustom();isHost=true;me='host';conns={};hostConn=null;P={host:{name:nm(),col:playerColor,hat:playerHat,x:800,y:570}};HS=null;C.phase='lobby';$('lobbyMenu').hidden=true;
  var code=makeCode();
  $('code').textContent=code;show('lobby');lobbyUI();
  beginConnect('Starting room service…',30000,'Room creation timed out. Check your internet connection and try again.');
@@ -289,7 +318,7 @@ function handle(id,m){
   sendTo(id,{t:'welcome',id:id});
   bcast({t:'lobby',P:P,cfg:roomCfg});return;
  }
- if(m.t==='lmove'&&C.phase==='lobby'&&P[id]){P[id].x=Math.max(520,Math.min(1080,Number(m.x)||800));P[id].y=Math.max(390,Math.min(720,Number(m.y)||560));bcast({t:'lpos',P:P});return}
+ if(m.t==='lmove'&&C.phase==='lobby'&&P[id]){P[id].x=Math.max(365,Math.min(1235,Number(m.x)||800));P[id].y=Math.max(210,Math.min(790,Number(m.y)||560));bcast({t:'lpos',P:P});return}
  if(m.t==='kick'&&isHost&&id===me&&C.phase==='lobby'){var target=String(m.id||'');if(!target||target===me||!P[target])return;sendTo(target,{t:'reject',reason:'The host removed you from this lobby.'});var kicked=conns[target];delete P[target];delete conns[target];if(kicked)try{kicked.close()}catch(e){}bcast({t:'lobby',P:P,cfg:roomCfg});return}
  if(!HS)return;var p=HS.p[id];if(!p)return;
  if(m.t==='in'){p.ix=m.x;p.iy=m.y}
@@ -373,7 +402,7 @@ function onMsg(m){
   if(!isHost)$('connectstate').textContent='';
   P=m.P;if(m.cfg)roomCfg=m.cfg;C.phase='lobby';show('lobby');
   if(!isHost)$('code').textContent=$('jc').value.trim().toUpperCase();
-  lobbyUI()
+  $('lobbyMenu').hidden=true;lobbyUI()
  }
  else if(m.t==='role'){P=m.P;C.role=m.role;C.tasks=m.tasks;C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
   killAt=Date.now()+(m.cooldown||12000);show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
@@ -399,10 +428,10 @@ function onMsg(m){
 }
 function showFx(label,color){var e=$('fx');e.textContent=label;e.style.color=color;e.style.display='flex';clearTimeout(e._t);e._t=setTimeout(function(){e.style.display='none'},850)}
 function lobbyUI(){
- var ids=Object.keys(P);$('playercount').textContent=String(ids.length).padStart(2,'0')+' / 10';$('roomsettings').style.display=isHost?'block':'none';
+ var ids=Object.keys(P);$('playercount').textContent=String(ids.length).padStart(2,'0')+' / 10';$('quickcount').textContent=ids.length+' / 10';$('quickcode').textContent=$('code').textContent||'----';$('roomsettings').style.display=isHost?'block':'none';
  if(isHost){$('cfgImps').value=String(roomCfg.imps);$('cfgSpeed').value=String(roomCfg.speed);$('cfgCooldown').value=String(roomCfg.cooldown);$('cfgTasks').value=String(roomCfg.tasks);$('cfgVision').value=String(roomCfg.vision||1)}
  $('plist').innerHTML=ids.map(function(k){var p=P[k];return'<span class="player-chip"><i style="background:'+p.col+';color:'+p.col+'"></i>'+esc(p.name)+(k===me?' <small>(YOU)</small>':'')+(isHost&&k!==me?' <button class="kick-player" data-kick="'+esc(k)+'">KICK</button>':'')+'</span>'}).join('');
- $('start').hidden=!isHost;$('start').disabled=connectBusy||ids.length<3||roomCfg.imps>=ids.length;
+ $('start').hidden=!isHost;$('start').disabled=connectBusy||ids.length<3||roomCfg.imps>=ids.length;$('waitStart').hidden=isHost;$('waitStart').textContent=ids.length<3?'WAITING FOR '+(3-ids.length)+' MORE PLAYER'+(3-ids.length===1?'':'S'):'WAITING FOR HOST TO START';
  $('lmsg').textContent=ids.length+' player'+(ids.length>1?'s':'')+(ids.length<3?' (need 3+)':'')+(isHost?'':' - waiting for host')+(roomCfg.imps>=ids.length?' · reduce impostors to start':'');
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -474,7 +503,7 @@ setInterval(function(){
  if(C.phase!=='play'&&C.phase!=='lobby')return;var x=jv.x,y=jv.y;
  if(keys.a||keys.arrowleft)x-=1;if(keys.d||keys.arrowright)x+=1;if(keys.w||keys.arrowup)y-=1;if(keys.s||keys.arrowdown)y+=1;
  var l=Math.hypot(x,y);if(l>1){x/=l;y/=l}
- if(C.phase==='lobby'){var lp=P[me];if(lp){lp.x=Math.max(520,Math.min(1080,(lp.x||800)+x*5));lp.y=Math.max(390,Math.min(720,(lp.y||570)+y*5));if(x||y)toHost({t:'lmove',x:lp.x,y:lp.y})}}else if(x!==inp.x||y!==inp.y||l>0){inp={x:x,y:y};toHost({t:'in',x:x,y:y})}
+ if(C.phase==='lobby'){var lp=P[me];if(lp){lp.x=Math.max(365,Math.min(1235,(lp.x||800)+x*5));lp.y=Math.max(210,Math.min(790,(lp.y||570)+y*5));if(x||y)toHost({t:'lmove',x:lp.x,y:lp.y})}}else if(x!==inp.x||y!==inp.y||l>0){inp={x:x,y:y};toHost({t:'in',x:x,y:y})}
 },50);
 
 /* ---------- render ---------- */
@@ -501,7 +530,7 @@ function body(x,y,col,dead){
  cx.strokeStyle='rgba(255,255,255,.7)';cx.lineWidth=1.5;cx.beginPath();cx.ellipse(2,-13,4,1.5,-.35,0,Math.PI*2);cx.stroke();
  cx.restore();
 }
-function drawHat(x,y,hat){if(!hat||hat==='none')return;cx.save();cx.translate(x,y-23);cx.lineWidth=2;cx.strokeStyle='#172033';if(hat==='cap'){cx.fillStyle='#e7eaf0';cx.beginPath();cx.roundRect(-12,-9,22,9,4);cx.fill();cx.stroke();cx.fillRect(4,-4,11,3)}else if(hat==='crown'){cx.fillStyle='#fbbf24';cx.beginPath();cx.moveTo(-12,0);cx.lineTo(-10,-13);cx.lineTo(-3,-6);cx.lineTo(1,-15);cx.lineTo(6,-6);cx.lineTo(12,-12);cx.lineTo(12,0);cx.closePath();cx.fill();cx.stroke()}else if(hat==='antenna'){cx.strokeStyle='#cbd5e1';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,-2);cx.lineTo(2,-15);cx.stroke();cx.fillStyle='#fb7185';cx.beginPath();cx.arc(2,-18,4,0,7);cx.fill()}else if(hat==='halo'){cx.strokeStyle='#fde68a';cx.lineWidth=4;cx.shadowColor='#facc15';cx.shadowBlur=9;cx.beginPath();cx.ellipse(0,-12,13,4,0,0,7);cx.stroke()}else if(hat==='flower'){for(var i=0;i<5;i++){var a=i*Math.PI*2/5;cx.fillStyle='#f9a8d4';cx.beginPath();cx.arc(Math.cos(a)*6,-10+Math.sin(a)*6,4,0,7);cx.fill()}cx.fillStyle='#facc15';cx.beginPath();cx.arc(0,-10,3,0,7);cx.fill()}cx.restore()}
+function drawHat(x,y,hat){if(!hat||hat==='none')return;cx.save();cx.translate(x,y-23);cx.lineWidth=2;cx.strokeStyle='#172033';if(hat==='cap'){cx.fillStyle='#e7eaf0';cx.beginPath();cx.roundRect(-12,-9,22,9,4);cx.fill();cx.stroke();cx.fillRect(4,-4,11,3)}else if(hat==='crown'){cx.fillStyle='#fbbf24';cx.beginPath();cx.moveTo(-12,0);cx.lineTo(-10,-13);cx.lineTo(-3,-6);cx.lineTo(1,-15);cx.lineTo(6,-6);cx.lineTo(12,-12);cx.lineTo(12,0);cx.closePath();cx.fill();cx.stroke()}else if(hat==='antenna'){cx.strokeStyle='#cbd5e1';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,-2);cx.lineTo(2,-15);cx.stroke();cx.fillStyle='#fb7185';cx.beginPath();cx.arc(2,-18,4,0,7);cx.fill()}else if(hat==='tophat'){cx.fillStyle='#080d18';cx.beginPath();cx.roundRect(-15,-3,30,5,2);cx.fill();cx.stroke();cx.fillStyle='#111827';cx.beginPath();cx.roundRect(-9,-23,18,21,3);cx.fill();cx.stroke();cx.fillStyle='#dc2626';cx.fillRect(-9,-8,18,4)}else if(hat==='halo'){cx.strokeStyle='#fde68a';cx.lineWidth=4;cx.shadowColor='#facc15';cx.shadowBlur=9;cx.beginPath();cx.ellipse(0,-12,13,4,0,0,7);cx.stroke()}else if(hat==='flower'){for(var i=0;i<5;i++){var a=i*Math.PI*2/5;cx.fillStyle='#f9a8d4';cx.beginPath();cx.arc(Math.cos(a)*6,-10+Math.sin(a)*6,4,0,7);cx.fill()}cx.fillStyle='#facc15';cx.beginPath();cx.arc(0,-10,3,0,7);cx.fill()}cx.restore()}
 function shade(hex,amt){
  var n=parseInt(hex.slice(1),16),r=Math.max(0,Math.min(255,(n>>16)+amt)),g=Math.max(0,Math.min(255,((n>>8)&255)+amt)),b=Math.max(0,Math.min(255,(n&255)+amt));
  return'rgb('+r+','+g+','+b+')';
