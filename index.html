@@ -356,6 +356,7 @@ var HALLS=[
  [[370,600],[485,600],[485,670],[370,670]]
 ];
 var ST=[[150,395],[230,265],[580,410],[570,560],[990,510],[1170,650],[1140,185],[1345,400],[190,455],[575,500],[690,110],[1050,360],[800,730],[1370,445],[585,620],[570,510],[885,330],[610,415]];
+var POWER_TARGETS=[[1020,780],[1050,550],[1170,650],[1345,400],[295,265],[580,410],[1050,360]];
 var TBL=[820,205];
 var TASK_NAMES=['START REACTOR','ALIGN ENGINE OUTPUT','SUBMIT SCAN','FIX WIRING','SWIPE CARD','PRIME SHIELDS','CLEAR ASTEROIDS','STABILIZE STEERING','UNLOCK MANIFOLDS','CALIBRATE DISTRIBUTOR','DOWNLOAD / UPLOAD DATA','CLEAN O2 FILTER','FUEL ENGINES','CHART COURSE','CLEAN VENT','DIVERT POWER','EMPTY GARBAGE','INSPECT SAMPLE'];
 var VENTS=[[350,205],[165,395],[350,615],[420,375],[610,350],[600,560],[955,335],[990,545],[1020,735],[1150,185],[1060,365],[1370,400],[1170,660],[760,620]];
@@ -681,10 +682,11 @@ function handle(id,m){
  if(!HS)return;var p=HS.p[id];if(!p)return;
  if(m.t==='in'){p.ix=m.x;p.iy=m.y}
  else if(m.t==='do'&&HS.phase==='play'){
-  var taskId=Number(m.id);
-  if(p.role==='crew'&&Number.isInteger(taskId)&&taskId>=0&&taskId<TASK_NAMES.length&&p.tasks.indexOf(taskId)>-1&&p.done.indexOf(taskId)<0&&d(p,ST[taskId])<92){
-   p.done.push(taskId);HS.done++;sendTo(id,{t:'td',id:taskId});if(HS.done>=HS.total)endGame('crew');
-  }else sendTo(id,{t:'taskRejected',id:m.id,reason:'You must finish this task at its assigned station.'});
+  var taskId=Number(m.id),stage=p.stages[taskId]||0,target=taskLocation(taskId,stage,p);
+  if(p.role==='crew'&&Number.isInteger(taskId)&&taskId>=0&&taskId<TASK_NAMES.length&&p.tasks.indexOf(taskId)>-1&&p.done.indexOf(taskId)<0&&target&&d(p,{x:target[0],y:target[1]})<92){
+   if(stage+1<taskStageCount(taskId)){p.stages[taskId]=stage+1;sendTo(id,{t:'taskStage',id:taskId,stage:stage+1})}
+   else{p.done.push(taskId);HS.done++;sendTo(id,{t:'td',id:taskId});if(HS.done>=HS.total)endGame('crew')}
+  }else sendTo(id,{t:'taskRejected',id:m.id,reason:'You must finish this stage at its assigned room.'});
  }
  else if(m.t==='kill'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.cd){
   var best=null,bd=KR;Object.keys(HS.p).forEach(function(k){var q=HS.p[k];if(q.alive&&q.role==='crew'&&d(p,q)<bd){bd=d(p,q);best=k}});
@@ -716,10 +718,19 @@ function handle(id,m){
   if(Object.keys(HS.p).every(function(k){return!HS.p[k].alive||HS.votes[k]!=null}))tally()}
 }
 function d(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function taskStageCount(id){return id===3?3:(id===10||id===15||id===16?2:(id===12?3:1))}
+function taskLocation(id,stage,actor){
+ if(id===3){var route=(actor&&actor.wireRoute)||C.wireRoute||[ST[3],[800,665],[690,110]];return route[Math.min(stage,route.length-1)]}
+ if(id===10)return stage===0?ST[10]:[1050,550];
+ if(id===12)return [ST[12],[295,265],[295,610]][Math.min(stage,2)];
+ if(id===15)return stage===0?ST[15]:((actor&&actor.powerTarget)||C.powerTarget||POWER_TARGETS[0]);
+ if(id===16)return stage===0?ST[16]:[800,665];
+ return ST[id];
+}
 $('start').onclick=function(){
  var ids=Object.keys(P);if(ids.length<3)return;
  readRoomCfg();if(roomCfg.imps>=ids.length){$('lmsg').textContent='There must be more crew than impostors.';return}
- HS={phase:'play',p:{},bodies:[],done:0,total:0,votes:{},t:0,cfg:Object.assign({},roomCfg),sabotage:null};
+ HS={phase:'play',p:{},bodies:[],done:0,total:0,votes:{},t:0,cfg:Object.assign({},roomCfg),sabotage:null,wireRoute:[ST[3],[800,665],[690,110]]};
  var shuffled=ids.slice().sort(function(){return Math.random()-.5}),imps=shuffled.slice(0,roomCfg.imps);
  // Common tasks are selected once and shared by every crewmate in this match.
  var commonTasks=[3,4].filter(function(){return Math.random()<.5});
@@ -727,10 +738,10 @@ $('start').onclick=function(){
   var a=i/ids.length*Math.PI*2,isImp=imps.indexOf(k)>-1;
   var individual=Array.from({length:TASK_NAMES.length},function(_,n){return n}).filter(function(n){return commonTasks.indexOf(n)<0}).sort(function(){return Math.random()-.5});
   var tl=commonTasks.concat(individual.slice(0,Math.max(0,roomCfg.tasks-commonTasks.length)));
-  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0};
+  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],stages:{},wireRoute:HS.wireRoute,powerTarget:POWER_TARGETS[Math.random()*POWER_TARGETS.length|0],cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0};
   if(!isImp)HS.total+=tl.length;
  });
- ids.forEach(function(k){sendTo(k,{t:'role',role:HS.p[k].role,tasks:HS.p[k].tasks,total:HS.total,P:P,cooldown:HS.cfg.cooldown,vision:HS.cfg.vision})});
+ ids.forEach(function(k){sendTo(k,{t:'role',role:HS.p[k].role,tasks:HS.p[k].tasks,total:HS.total,P:P,cooldown:HS.cfg.cooldown,vision:HS.cfg.vision,wireRoute:HS.wireRoute,powerTarget:HS.p[k].powerTarget})});
  clearInterval(HS.t);HS.t=setInterval(tick,50);
 };
 function tick(){
@@ -815,11 +826,12 @@ function onMsg(m){
   if(!isHost){var entered=$('jc').value.trim().toUpperCase();$('code').textContent=entered;$('quickcode').textContent=entered;$('copycode').innerHTML='COPY CODE <span>▣</span>';}
   $('lobbyMenu').hidden=true;lobbyUI()
  }
- else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
+ else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||[ST[3],[800,665],[690,110]];C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
   killAt=Date.now()+(m.cooldown||12000);show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
   $('role').style.color=m.role==='imp'?'#fb7185':'#8fe3ff';taskUI()}
  else if(m.t==='lpos'){P=m.P}
  else if(m.t==='st'){C.pos={};m.p.forEach(function(a){C.pos[a[0]]={x:a[1],y:a[2],al:a[3]}});C.bodies=m.b;C.done=m.dn;$('bar').firstChild.style.width=(C.total?m.dn/C.total*100:0)+'%';if(C.role==='crew'&&C.pos[me]&&!C.pos[me].al){$('role').textContent='GHOST · CREW';$('role').style.color='#a5b4fc'}}
+ else if(m.t==='taskStage'){C.stages[m.id]=m.stage;pendingTask=-1;activeTask=-1;if(taskTimer){clearInterval(taskTimer);taskTimer=null}$('taskpanel').style.display='none';taskUI();showFx('NEXT LOCATION','#8ff8e8')}
  else if(m.t==='td'){C.mine[m.id]=1;taskUI();if(activeTask===Number(m.id)){pendingTask=-1;$('taskstatus').textContent='TASK VERIFIED · SYSTEM RESTORED';setTimeout(closeTask,420)}}
  else if(m.t==='taskRejected'){pendingTask=-1;$('taskstatus').textContent=m.reason||'Return to the correct station.';Array.from($('taskarea').querySelectorAll('button')).forEach(function(b){b.disabled=false})}
  else if(m.t==='cd'){killAt=m.until||Date.now()+12000}
