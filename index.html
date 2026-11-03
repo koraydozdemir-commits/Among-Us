@@ -143,7 +143,7 @@ var ambience=Array.from({length:54},function(_,i){return{x:(i*347)%W,y:(i*613)%H
 var CH='ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /* Supabase Realtime transport. The host remains authoritative; room traffic is
-   sent over a single room channel rather than depending on public PeerJS IDs. */
+   sent over a single room channel rather than depending on public Supabase Realtime IDs. */
 var SB_URL='https://wnxauvllhjklhpjksvuz.supabase.co';
 var SB_KEY='sb_publishable_kTrhj6QAHhLLrdva03Neuw_21MKNymV';
 var sbClient=window.supabase.createClient(SB_URL,SB_KEY);
@@ -363,7 +363,7 @@ $('join').onclick=function(){
  if(connectBusy)return;
  var code=$('jc').value.trim().toUpperCase();
  if(!/^[A-HJ-NP-Z]{4}$/.test(code))return err('Enter the 4-letter room code.');
- if(!window.Peer)return err('PeerJS did not load. Refresh the page and try again.');
+ if(!window.Peer)return err('Multiplayer networking did not load. Refresh the page and try again.');
  $('jc').value=code;
  if(peer){try{peer.destroy()}catch(e){}peer=null}
  isHost=false;hostConn=null;conns={};P={};me='me';
