@@ -780,7 +780,7 @@ function isWalkable(x,y){
  // Collision uses the measured interior wall polylines, with doorway gaps
  // cut out from those exact wall segments. This prevents walking through rooms.
  var walls=buildMapWalls();
- for(var i=0;i<walls.length;i++)if(distanceToSegment(x,y,walls[i])<1.25)return false;
+ for(var i=0;i<walls.length;i++)if(distanceToSegment(x,y,walls[i])<0.6)return false;
  return true;
 }
 function hit(p){
@@ -831,7 +831,7 @@ function onMsg(m){
   if(!isHost){var entered=$('jc').value.trim().toUpperCase();$('code').textContent=entered;$('quickcode').textContent=entered;$('copycode').innerHTML='COPY CODE <span>▣</span>';}
   $('lobbyMenu').hidden=true;lobbyUI()
  }
- else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.downloadStart=m.downloadStart||ST[10];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';
+ else if(m.t==='role'){P=m.P;C.role=m.role;C.vision=m.vision||1;C.sabotage=null;C.sabotageUntil=0;C.tasks=m.tasks;C.stages={};C.wireRoute=m.wireRoute||MAPDATA.DEFAULT_WIRE_ROUTE;C.powerTarget=m.powerTarget||POWER_TARGETS[0];C.downloadStart=m.downloadStart||ST[10];C.mine={};C.total=m.total;C.done=0;C.bodies=[];C.alive=true;C.phase='play';$('bar').firstChild.style.width='0%';
   killAt=Date.now()+(m.cooldown||12000);show(null);$('hud').style.display='flex';$('btns').style.display='flex';$('role').textContent=m.role==='imp'?'SABOTEUR':'CREW';
   $('role').style.color=m.role==='imp'?'#fb7185':'#8fe3ff';taskUI()}
  else if(m.t==='lpos'){P=m.P}
@@ -909,7 +909,7 @@ function lobbyUI(){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 $('plist').addEventListener('click',function(e){var b=e.target.closest('[data-kick]');if(b&&isHost&&confirm('Kick this player from the lobby?'))toHost({t:'kick',id:b.getAttribute('data-kick')})});
-function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){var stage=C.stages&&C.stages[i]||0,tail=i===3?' ('+(stage+1)+'/3)':(i===10||i===15||i===16?' ('+(stage+1)+'/2)':(i===12?' ('+(stage+1)+'/3)':''));var label=i===10?(stage?'UPLOAD DATA':'DOWNLOAD DATA'):TASK_NAMES[i];return(C.mine[i]?'&#10003; ':'&#9675; ')+label+tail}).join('<br>')}
+function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){var stage=C.stages&&C.stages[i]||0,total=taskStageCount(i),tail=total>1?' ('+(stage+1)+'/'+total+')':'';var label=i===10?(stage?'UPLOAD DATA':'DOWNLOAD DATA'):TASK_NAMES[i];return(C.mine[i]?'&#10003; ':'&#9675; ')+label+tail}).join('<br>')}
 function meetUI(m){
  show('vote');$('vt').textContent=(m.why==='body'?'Body reported by ':'Emergency meeting by ')+P[m.by].name;
  var amAlive=m.al.indexOf(me)>-1,o='';
@@ -1391,7 +1391,7 @@ function buildMapWalls(){
     var px=d[0]+d[2]/2,py=d[1]+d[3]/2;
     var t=Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/(len*len)));
     if(Math.hypot(px-(a[0]+dx*t),py-(a[1]+dy*t))<34){
-     var half=(Math.max(d[2],d[3])/2+13)/len;
+     var half=(Math.max(d[2],d[3])/2+23)/len;
      gaps.push([Math.max(0,t-half),Math.min(1,t+half)]);
     }
    });
@@ -1515,12 +1515,6 @@ function drawSkeld(){
  if(killFx&&Date.now()-killFx.at<650){var age=(Date.now()-killFx.at)/650;cx.save();cx.globalAlpha=1-age;cx.strokeStyle='#ff496c';cx.lineWidth=7;cx.shadowColor='#ff1744';cx.shadowBlur=18;cx.beginPath();cx.arc(killFx.x,killFx.y,18+age*62,0,Math.PI*2);cx.stroke();cx.restore()}
  Object.keys(C.pos).forEach(function(k){var q=C.pos[k];if(!P[k])return;if(!q.al&&!(C.pos[me]&&!C.pos[me].al))return;cx.globalAlpha=q.al?1:.45;body(q.x,q.y,P[k].col,!q.al);drawHat(q.x,q.y,P[k].hat);cx.globalAlpha=1;cx.fillStyle='#f7ffff';cx.font='bold 16px Arial';cx.textAlign='center';cx.strokeStyle='#17262b';cx.lineWidth=4;cx.strokeText(P[k].name,q.x,q.y-23);cx.fillText(P[k].name,q.x,q.y-23)});
  cx.restore();
-}
-function drawVision(p){
- // Full ship visibility: disable the darkness overlay until wall occlusion is
- // implemented with a proper off-screen visibility mask.
- // Room walls, door frames and foreground furniture still render normally.
- return;
 }
 function drawMinimap(){
  var mw=Math.min(250,Math.max(190,innerWidth*.27))*DPR,mh=mw*.55,pad=12*DPR,x=cv.width-mw-pad,y=82*DPR;
