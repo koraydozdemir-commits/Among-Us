@@ -46,7 +46,7 @@ button.g{background:#2a2f55}button:disabled{opacity:.35}
  <h1>VOID CREW</h1><div style="color:#9aa">Find the saboteur before they get you.</div>
  <input id="nm" maxlength="10" placeholder="Your name" autocomplete="off">
  <div class="row"><button id="host">Host game</button></div>
- <input id="jc" maxlength="6" placeholder="CODE" autocapitalize="characters" autocomplete="off">
+ <input id="jc" maxlength="4" placeholder="4-LETTER CODE" autocapitalize="characters" autocomplete="off">
  <button id="join" class="g">Join with code</button>
  <div id="err" style="color:#fb7185;min-height:22px"></div><div id="connectstate" style="min-height:20px;color:#a9c7e8;font-size:13px"></div>
  <div style="color:#667;font-size:13px;max-width:380px">Needs internet. 3 or more players. Everyone opens the same page.</div>
@@ -111,7 +111,7 @@ function sendTo(id,m){
  var c=conns[id];if(c&&c.open){try{c.send(m)}catch(e){}}
 }
 function nm(){return($('nm').value.trim()||'Crew').slice(0,10)}
-function makeCode(){var code='';for(var i=0;i<6;i++)code+=CH[Math.random()*CH.length|0];return code}
+function makeCode(){var code='';for(var i=0;i<4;i++)code+=CH[Math.random()*CH.length|0];return code}
 function connectionLost(message){
  if(C.phase==='play'||C.phase==='meet'){alert(message);location.reload();return}
  resetConnection(message);
@@ -135,27 +135,41 @@ function attachHostConnection(c){
   }
  });
 }
+function failHost(message){
+ resetConnection(message);isHost=false;P={};C.phase='home';show('home');
+}
 function beginHost(code,attempt){
  if(!connectBusy)return;
- $('connectstate').textContent='Creating room '+code+'…';
- try{peer=new Peer('vcrew-'+code,{debug:0})}
- catch(e){if(attempt<5){beginHost(makeCode(),attempt+1);return}resetConnection('Could not start the room service. Please try again.');return}
- var opened=false;
+ $('code').textContent=code;
+ $('lmsg').textContent='Connecting to room service…';
+ $('connectstate').textContent='Reserving room code…';
+ try{peer=new Peer('vcrew-'+code,{debug:1,host:'0.peerjs.com',port:443,path:'/',secure:true})}
+ catch(e){if(attempt<25){beginHost(makeCode(),attempt+1);return}failHost('Could not start the room service. Please try again.');return}
+ var opened=false,settled=false;
  peer.on('error',function(e){
-  if(opened)return;
-  if(e&&e.type==='unavailable-id'&&attempt<5){
+  if(opened||settled)return;
+  if(e&&e.type==='unavailable-id'&&attempt<25){
+   settled=true;
    try{peer.destroy()}catch(x){}
-   peer=null;beginHost(makeCode(),attempt+1);return;
+   peer=null;
+   var next=makeCode();$('code').textContent=next;
+   beginHost(next,attempt+1);return;
   }
-  resetConnection('Room creation failed ('+(e&&e.type||'network error')+'). Please try again.');
+  settled=true;
+  failHost('Room creation failed ('+(e&&e.type||'network error')+'). Please try again.');
+ });
+ peer.on('disconnected',function(){
+  if(!opened||!peer)return;
+  try{peer.reconnect()}catch(e){}
  });
  peer.on('open',function(id){
   if(opened||!connectBusy)return;opened=true;stopConnectTimer();connectBusy=false;
   isHost=true;me='host';P={host:{name:nm(),col:COL[0]}};
   $('host').disabled=$('join').disabled=false;$('connectstate').textContent='';
-  $('code').textContent=code;show('lobby');lobbyUI();
+  $('lmsg').textContent='Share the code with your friends. Waiting for players…';
   // Register the listener before advertising the room to the host.
   peer.on('connection',attachHostConnection);
+  lobbyUI();
   bcast({t:'lobby',P:P,cfg:roomCfg});
  });
 }
@@ -163,20 +177,22 @@ $('host').onclick=function(){
  if(connectBusy)return;
  if(!window.Peer)return err('PeerJS did not load. Refresh the page and try again.');
  if(peer){try{peer.destroy()}catch(e){}peer=null}
- readRoomCfg();isHost=false;conns={};hostConn=null;P={};HS=null;
+ readRoomCfg();isHost=true;me='host';conns={};hostConn=null;P={host:{name:nm(),col:COL[0]}};HS=null;C.phase='lobby';
  var code=makeCode();
- beginConnect('Starting room service…',25000,'Room creation timed out. Check your internet connection and try again.');
+ $('code').textContent=code;show('lobby');lobbyUI();
+ beginConnect('Starting room service…',30000,'Room creation timed out. Check your internet connection and try again.');
  beginHost(code,0);
 };
 $('join').onclick=function(){
  if(connectBusy)return;
  var code=$('jc').value.trim().toUpperCase();
- if(!/^[A-HJ-NP-Z2-9]{6}$/.test(code))return err('Enter the 6-character room code.');
+ if(!/^[A-HJ-NP-Z]{4}$/.test(code))return err('Enter the 4-letter room code.');
  if(!window.Peer)return err('PeerJS did not load. Refresh the page and try again.');
+ $('jc').value=code;
  if(peer){try{peer.destroy()}catch(e){}peer=null}
  isHost=false;hostConn=null;conns={};P={};me='me';
- beginConnect('Connecting to the room service…',25000,'Could not connect. Check the room code and internet connection, then try again.');
- try{peer=new Peer({debug:0})}
+ beginConnect('Connecting to the room service…',30000,'Could not connect. Check the room code and internet connection, then try again.');
+ try{peer=new Peer({debug:1,host:'0.peerjs.com',port:443,path:'/',secure:true})}
  catch(e){resetConnection('Could not start networking. Please try again.');return}
  peer.on('error',function(e){
   if(!connectBusy)return;
@@ -321,7 +337,7 @@ function lobbyUI(){
  var ids=Object.keys(P);$('roomsettings').style.display=isHost?'block':'none';
  if(isHost){$('cfgImps').value=String(roomCfg.imps);$('cfgSpeed').value=String(roomCfg.speed);$('cfgCooldown').value=String(roomCfg.cooldown);$('cfgTasks').value=String(roomCfg.tasks)}
  $('plist').innerHTML=ids.map(function(k){return'<span class="chip" style="background:'+P[k].col+'33;border-color:'+P[k].col+'">'+esc(P[k].name)+'</span>'}).join('');
- $('start').hidden=!isHost;$('start').disabled=ids.length<3||roomCfg.imps>=ids.length;
+ $('start').hidden=!isHost;$('start').disabled=connectBusy||ids.length<3||roomCfg.imps>=ids.length;
  $('lmsg').textContent=ids.length+' player'+(ids.length>1?'s':'')+(ids.length<3?' (need 3+)':'')+(isHost?'':' - waiting for host')+(roomCfg.imps>=ids.length?' · reduce impostors to start':'');
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
