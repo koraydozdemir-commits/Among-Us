@@ -309,19 +309,19 @@ function SupabasePeer(idOrOptions){
 SupabasePeer.prototype=Object.create(EventHub.prototype);
 SupabasePeer.prototype.openHost=function(){
  var self=this,code=this.id.replace(/^vcrew-/,'');
+ var initialPresenceCheck=true;
  this.room=code;this.channel=sbClient.channel('ja-room-'+code,{config:{broadcast:{ack:true,self:false},presence:{key:'host'}}});
  this.channel.on('broadcast',{event:'packet'},function(msg){self.receive(msg&&msg.payload)});
  this.channel.subscribe(function(status){
   if(self.destroyed)return;
   if(status==='SUBSCRIBED'){
-   var state=self.channel.presenceState();
-   if(state.host&&state.host.length){self.emit('error',{type:'unavailable-id'});self.destroy();return}
-   self.channel.track({role:'host',online:true}).then(function(){
-    if(!self.destroyed)self.emit('open',self.id);
-   }).catch(function(){self.emit('error',{type:'network'});});
-  }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
-   self.emit('error',{type:'network'});
-  }
+   if(initialPresenceCheck){
+    initialPresenceCheck=false;
+    var state=self.channel.presenceState();
+    if(state.host&&state.host.length){self.emit('error',{type:'unavailable-id'});self.destroy();return}
+   }
+   self.channel.track({role:'host',online:true}).then(function(){if(!self.destroyed)self.emit('open',self.id)}).catch(function(e){console.warn('Host presence restore failed',e)});
+  }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){console.warn('Room channel temporarily disconnected:',status)}
  });
 };
 SupabasePeer.prototype.sendPacket=function(packet){
