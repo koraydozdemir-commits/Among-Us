@@ -353,7 +353,7 @@ SupabasePeer.prototype.connect=function(target){
  var c=new RealtimeConn(this,'host',false);c.open=false;this.clientConnection=c;this.room=code;
  this.channel=sbClient.channel('ja-room-'+code,{config:{broadcast:{ack:true,self:false},presence:{key:this.id}}});
  this.channel.on('broadcast',{event:'packet'},function(msg){self.receive(msg&&msg.payload)});
- var hostGraceTimer=null;
+ var hostGraceTimer=null,everSubscribed=false;
  this.channel.on('presence',{event:'leave'},function(p){if(p&&p.key==='host'&&!self.destroyed){if(hostGraceTimer)clearTimeout(hostGraceTimer);hostGraceTimer=setTimeout(function(){if(self.destroyed)return;var state=self.channel&&self.channel.presenceState();if(state&&state.host&&state.host.length)return;if(connectBusy)self.emit('error',{type:'host-disconnected'});else connectionLost('The host connection was lost. Rejoin the room.')},12000)}});
  this.channel.on('presence',{event:'join'},function(p){if(p&&p.key==='host'&&hostGraceTimer){clearTimeout(hostGraceTimer);hostGraceTimer=null}});
  this.channel.on('presence',{event:'sync'},function(){var state=self.channel&&self.channel.presenceState();if(state&&state.host&&state.host.length&&hostGraceTimer){clearTimeout(hostGraceTimer);hostGraceTimer=null}});
@@ -362,7 +362,9 @@ SupabasePeer.prototype.connect=function(target){
   if(status==='SUBSCRIBED'){
    // Presence can arrive a moment after SUBSCRIBED. Do not reject a valid
    // room from a single, potentially stale presenceState() snapshot.
-   c.open=true;self.clientWelcomed=false;
+   c.open=true;
+   if(!everSubscribed){everSubscribed=true;self.clientWelcomed=false}
+   if(self.clientWelcomed)return;
    var attempts=0;
    function announceJoin(){
     if(self.destroyed||self.clientWelcomed)return;
@@ -770,7 +772,7 @@ $('rep').addEventListener('pointerdown',function(e){e.preventDefault();toHost({t
 
 setInterval(function(){
  if(C.phase!=='play'&&C.phase!=='lobby')return;var x=activeTask>=0?0:jv.x,y=activeTask>=0?0:jv.y;
- if(keys.a||keys.arrowleft)x-=1;if(keys.d||keys.arrowright)x+=1;if(keys.w||keys.arrowup)y-=1;if(keys.s||keys.arrowdown)y+=1;
+ if(activeTask<0){if(keys.a||keys.arrowleft)x-=1;if(keys.d||keys.arrowright)x+=1;if(keys.w||keys.arrowup)y-=1;if(keys.s||keys.arrowdown)y+=1;}
  var l=Math.hypot(x,y);if(l>1){x/=l;y/=l}
  if(C.phase==='lobby'){var lp=P[me];if(lp){lp.x=Math.max(365,Math.min(1235,(lp.x||800)+x*5));lp.y=Math.max(210,Math.min(790,(lp.y||570)+y*5));if(x||y)toHost({t:'lmove',x:lp.x,y:lp.y})}}else if(x!==inp.x||y!==inp.y||l>0){inp={x:x,y:y};toHost({t:'in',x:x,y:y})}
 },50);
