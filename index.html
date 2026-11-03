@@ -72,7 +72,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;ba
 #start:disabled{filter:grayscale(.7);opacity:.45}
 @media(max-width:520px){.menu-card{padding:19px}.home-title h1{letter-spacing:-1px}.connection-notes{gap:10px;font-size:8px}.lobby-heading{margin-top:8px}}
 /* Free-roam lobby: keep the dropship clear and make room controls optional. */
-#lobby{display:block!important;overflow:hidden;padding:0;pointer-events:none;background:transparent}
+#lobby{display:block;overflow:hidden;padding:0;pointer-events:none;background:transparent}#lobby[hidden]{display:none!important}
 #lobby .lobby-hud{position:absolute;inset:0;pointer-events:none}
 .lobby-quickbar{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;pointer-events:auto}
 .quick-room{display:flex;align-items:center;gap:9px;padding:11px 15px;border:1px solid #8edfff35;border-radius:14px;background:#071827dc;backdrop-filter:blur(12px);box-shadow:0 8px 25px #0007;color:#9fb8d2;font-size:10px;font-weight:900;letter-spacing:1.5px}
