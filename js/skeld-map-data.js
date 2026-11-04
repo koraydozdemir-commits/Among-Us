@@ -123,7 +123,7 @@ const PROPS=[
  {id:'admin-table',x:930,y:500,w:100,h:70},
  {id:'shield-generator',x:1127,y:650,w:66,h:66}
 ];
-const NO_COLLISION_PROPS=new Set(['security-desk','medbay-bed-a','medbay-bed-b']);
+const NO_COLLISION_PROPS=new Set(['security-desk','medbay-bed-a','medbay-bed-b','weapons-cannon']);
 const SMALL_ROOM_PROPS=new Set(['upper-engine','lower-engine','reactor-core']);
 const BLOCKERS=PROPS.filter(p=>!NO_COLLISION_PROPS.has(p.id)).map(p=>{
  const scale=SMALL_ROOM_PROPS.has(p.id)?0.34:0.58;
