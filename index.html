@@ -1430,7 +1430,7 @@ function raycastVisibility(p,radius){
  walls.forEach(function(w){[[w[0],w[1]],[w[2],w[3]]].forEach(function(v){var a=Math.atan2(v[1]-p.y,v[0]-p.x);angles.push(a-.0008,a,a+.0008)})});
  angles.sort(function(a,b){return a-b});var points=[];
  for(var i=0;i<angles.length;i++){var a=angles[i],dx=Math.cos(a),dy=Math.sin(a),nearest=radius;
-  for(var j=0;j<walls.length;j++){var t=raySegmentDistance(p.x,p.y,dx,dy,walls[j]);if(t>0&&t<nearest)nearest=t}
+  for(var j=0;j<walls.length;j++){var t=raySegmentDistance(p.x,p.y,dx,dy,walls[j]);if(t>82&&t<nearest)nearest=t}
   points.push([p.x+dx*Math.max(0,nearest-2),p.y+dy*Math.max(0,nearest-2)]);
  }
  return points;
