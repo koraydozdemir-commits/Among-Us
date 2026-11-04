@@ -123,7 +123,13 @@ const PROPS=[
  {id:'admin-table',x:930,y:500,w:100,h:70},
  {id:'shield-generator',x:1127,y:650,w:66,h:66}
 ];
-const BLOCKERS=PROPS.map(p=>{const cw=p.w*0.58,ch=p.h*0.58;return[p.x-cw/2,p.y-ch/2,cw,ch]}).concat([
+const NO_COLLISION_PROPS=new Set(['security-desk','medbay-bed-a','medbay-bed-b']);
+const SMALL_ROOM_PROPS=new Set(['upper-engine','lower-engine','reactor-core']);
+const BLOCKERS=PROPS.filter(p=>!NO_COLLISION_PROPS.has(p.id)).map(p=>{
+ const scale=SMALL_ROOM_PROPS.has(p.id)?0.34:0.58;
+ const cw=p.w*scale,ch=p.h*scale;
+ return[p.x-cw/2,p.y-ch/2,cw,ch];
+}).concat([
  [480,492,30,48],[520,492,30,48],[560,492,30,48],[600,492,30,48],
  [480,610,30,42],[520,610,30,42],[560,610,30,42],
  [660,590,42,42],[750,590,42,42],[800,590,38,38],[660,705,42,42],[800,705,38,38],[740,770,42,38],
