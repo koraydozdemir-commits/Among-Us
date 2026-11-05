@@ -300,11 +300,11 @@ canvas{image-rendering:auto}
    <div class="sab-deck"><div class="sab-room r-caf">CAFETERIA</div><div class="sab-room r-admin">ADMIN</div><div class="sab-room r-elec">ELECTRICAL</div><div class="sab-room r-react">REACTOR</div><div class="sab-room r-nav">NAVIGATION</div><div class="sab-room r-eng">ENGINE</div><div class="sab-route"></div></div>
   </div>
   <div class="sab-actions">
-   <button class="sab-option" data-sab="lights"><span class="sab-icon">ϟ</span><span class="sab-copy"><b>LIGHTS</b><small>Reduce crew vision. Reset all switches at the Electrical panel.</small><em>ELECTRICAL</em></span><span class="sab-arrow">›</span></button>
+   <button class="sab-option" data-sab="lights"><span class="sab-icon">ϟ</span><span class="sab-copy"><b>LIGHTS</b><small>Black out the ship. Match a randomized five-breaker pattern in Electrical.</small><em>ELECTRICAL</em></span><span class="sab-arrow">›</span></button>
    <button class="sab-option" data-sab="reactor"><span class="sab-icon">☢</span><span class="sab-copy"><b>REACTOR MELTDOWN</b><small>Two hand scanners must be held to stabilise the reactor.</small><em>REACTOR · 35 SEC</em></span><span class="sab-arrow">›</span></button>
    <button class="sab-option" data-sab="o2"><span class="sab-icon">O₂</span><span class="sab-copy"><b>OXYGEN DEPLETED</b><small>Enter the emergency PIN at both terminals.</small><em>O2 + ADMIN · 35 SEC</em></span><span class="sab-arrow">›</span></button>
-   <button class="sab-option" data-sab="comms"><span class="sab-icon">⌁</span><span class="sab-copy"><b>COMMUNICATIONS</b><small>Recalibrate the radio signal in Communications.</small><em>COMMUNICATIONS</em></span><span class="sab-arrow">›</span></button>
-   <button class="sab-option" data-sab="doors"><span class="sab-icon">▣</span><span class="sab-copy"><b>CLOSE DOORS</b><small>Seal two doors temporarily to split up the crew.</small><em>DOOR SYSTEMS</em></span><span class="sab-arrow">›</span></button>
+   <button class="sab-option" data-sab="comms"><span class="sab-icon">⌁</span><span class="sab-copy"><b>COMMUNICATIONS</b><small>Scramble task signals. Tune three separate radio bands in Communications.</small><em>COMMUNICATIONS · 3 BANDS</em></span><span class="sab-arrow">›</span></button>
+   <button class="sab-option" data-sab="doors"><span class="sab-icon">▣</span><span class="sab-copy"><b>CLOSE DOORS</b><small>Seal three randomly selected doors to split up the crew.</small><em>3 DOORS · 16 SEC</em></span><span class="sab-arrow">›</span></button>
   </div>
   <div class="sab-foot"><span><i></i> SABOTAGE READY</span><button id="sabCancel">CLOSE <b>×</b></button></div>
  </div>
@@ -669,13 +669,13 @@ function handle(id,m){
  if(m.t==='lmove'&&C.phase==='lobby'&&P[id]){P[id].x=Math.max(365,Math.min(1235,Number(m.x)||800));P[id].y=Math.max(210,Math.min(790,Number(m.y)||560));bcast({t:'lpos',P:P});return}
  if(m.t==='kick'&&isHost&&id===me&&C.phase==='lobby'){var target=String(m.id||'');if(!target||target===me||!P[target])return;sendTo(target,{t:'reject',reason:'The host removed you from this lobby.'});var kicked=conns[target];delete P[target];delete conns[target];if(kicked)try{kicked.close()}catch(e){}bcast({t:'lobby',P:P,cfg:roomCfg});return}
  if(!HS)return;var p=HS.p[id];if(!p)return;
- if(m.t==='in'){p.ix=m.x;p.iy=m.y}
+ if(m.t==='in'){var ix=Number(m.x),iy=Number(m.y);if(!Number.isFinite(ix)||!Number.isFinite(iy)){p.ix=0;p.iy=0}else{var il=Math.hypot(ix,iy);if(il>1){ix/=il;iy/=il}p.ix=ix;p.iy=iy}p.inputAt=Date.now()}
  else if(m.t==='do'&&HS.phase==='play'){
   var taskId=Number(m.id),stage=p.stages[taskId]||0,target=taskLocation(taskId,stage,p);
-  if(p.role==='crew'&&Number.isInteger(taskId)&&taskId>=0&&taskId<TASK_NAMES.length&&p.tasks.indexOf(taskId)>-1&&p.done.indexOf(taskId)<0&&target&&d(p,{x:target[0],y:target[1]})<92){
+  if(p.role==='crew'&&!(HS.sabotage&&HS.sabotage.type==='comms'&&HS.sabotage.until>Date.now())&&Number.isInteger(taskId)&&taskId>=0&&taskId<TASK_NAMES.length&&p.tasks.indexOf(taskId)>-1&&p.done.indexOf(taskId)<0&&target&&d(p,{x:target[0],y:target[1]})<92){
    if(stage+1<taskStageCount(taskId)){p.stages[taskId]=stage+1;sendTo(id,{t:'taskStage',id:taskId,stage:stage+1})}
    else{p.done.push(taskId);HS.done++;sendTo(id,{t:'td',id:taskId});if(HS.done>=HS.total)endGame('crew')}
-  }else sendTo(id,{t:'taskRejected',id:m.id,reason:'You must finish this stage at its assigned room.'});
+  }else sendTo(id,{t:'taskRejected',id:m.id,reason:HS.sabotage&&HS.sabotage.type==='comms'&&HS.sabotage.until>Date.now()?'Communications are offline. Restore the signal first.':'You must finish this stage at its assigned room.'});
  }
  else if(m.t==='kill'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.cd){
   var best=null,bd=KR;Object.keys(HS.p).forEach(function(k){var q=HS.p[k];if(q.alive&&q.role==='crew'&&d(p,q)<bd){bd=d(p,q);best=k}});
@@ -693,11 +693,14 @@ function handle(id,m){
  }
  else if(m.t==='sab'&&HS.phase==='play'&&p.alive&&p.role==='imp'&&Date.now()>p.scd&&!HS.sabotage){
   var type=['lights','reactor','o2','comms','doors'].indexOf(m.type)>-1?m.type:'lights';
-  var duration=(type==='reactor'||type==='o2')?35000:(type==='doors'?14000:35000);
-  var doorSet=type==='doors'?[0,2,3,4,5,6,13,14,15].sort(function(){return Math.random()-.5}).slice(0,2):[];
-  HS.sabotage={type:type,until:Date.now()+duration,repairs:{},code:type==='o2'?String(Math.floor(10000+Math.random()*90000)):null,target:type==='comms'?Math.floor(25+Math.random()*50):null,doors:doorSet};
+  var duration=(type==='reactor'||type==='o2')?35000:(type==='doors'?16000:35000);
+  var doorSet=type==='doors'?[0,2,3,4,5,6,13,14,15].sort(function(){return Math.random()-.5}).slice(0,3):[];
+  var switchPattern=Array.from({length:5},function(){return Math.random()<.5?1:0});if(!switchPattern.some(Boolean))switchPattern[0]=1;
+  var signalTarget=type==='comms'?Math.floor(25+Math.random()*50):null;
+  var signalFrequencies=type==='comms'?[signalTarget-15,signalTarget,signalTarget+15]:null;
+  HS.sabotage={type:type,until:Date.now()+duration,repairs:{},code:type==='o2'?String(Math.floor(10000+Math.random()*90000)):null,target:signalTarget,frequencies:signalFrequencies,switches:type==='lights'?switchPattern:null,doors:doorSet};
   HS.sabotageUntil=HS.sabotage.until;p.scd=Date.now()+25000;
-  bcast({t:'sabotage',type:type,until:HS.sabotage.until,code:HS.sabotage.code,target:HS.sabotage.target,doors:doorSet});
+  bcast({t:'sabotage',type:type,until:HS.sabotage.until,code:HS.sabotage.code,target:HS.sabotage.target,frequencies:HS.sabotage.frequencies,switches:HS.sabotage.switches,doors:doorSet});
   sendTo(id,{t:'sabcd',until:p.scd});
  }
  else if(m.t==='repair'&&HS.phase==='play'&&p.alive&&p.role==='crew'&&HS.sabotage&&HS.sabotage.type!=='doors'&&HS.sabotage.until>Date.now()){
@@ -705,7 +708,8 @@ function handle(id,m){
   var valid=Number.isInteger(pi)&&pi>=0&&pi<locations.length&&d(p,{x:locations[pi][0],y:locations[pi][1]})<95;
   if(valid){
    if(sab.type==='o2'&&String(m.code||'')!==String(sab.code))return;
-   if(sab.type==='comms'&&Math.abs(Number(m.frequency)-sab.target)>6)return;
+   if(sab.type==='lights'&&(!Array.isArray(m.switches)||m.switches.length!==5||m.switches.some(function(v,i){return Number(v)!==sab.switches[i]})))return;
+   if(sab.type==='comms'&&(!Array.isArray(m.frequencies)||m.frequencies.length!==3||m.frequencies.some(function(v,i){return !Number.isFinite(Number(v))||Math.abs(Number(v)-sab.frequencies[i])>4})))return;
    sab.repairs[pi]=1;bcast({t:'repairProgress',type:sab.type,panel:pi});
    var complete=(sab.type==='comms'||sab.type==='lights')?!!sab.repairs[0]:!!sab.repairs[0]&&!!sab.repairs[1];
    if(complete){HS.sabotage=null;HS.sabotageUntil=0;bcast({t:'repaired',type:sab.type})}
@@ -762,7 +766,7 @@ $('start').onclick=function(){
   var a=i/ids.length*Math.PI*2,isImp=imps.indexOf(k)>-1;
   var individual=Array.from({length:TASK_NAMES.length},function(_,n){return n}).filter(function(n){return TASK_NAMES[n]!==null&&commonTasks.indexOf(n)<0}).sort(function(){return Math.random()-.5});
   var tl=commonTasks.concat(individual.slice(0,Math.max(0,roomCfg.tasks-commonTasks.length)));
-  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],stages:{},wireRoute:HS.wireRoute,powerTarget:POWER_TARGETS[Math.random()*POWER_TARGETS.length|0],downloadStart:DOWNLOAD_STATIONS[Math.random()*DOWNLOAD_STATIONS.length|0].point,cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0};
+  HS.p[k]={x:TBL[0]+Math.cos(a)*70,y:TBL[1]+Math.sin(a)*70,ix:0,iy:0,alive:true,role:isImp?'imp':'crew',tasks:isImp?[]:tl,done:[],stages:{},wireRoute:HS.wireRoute,powerTarget:POWER_TARGETS[Math.random()*POWER_TARGETS.length|0],downloadStart:DOWNLOAD_STATIONS[Math.random()*DOWNLOAD_STATIONS.length|0].point,cd:Date.now()+roomCfg.cooldown,vcd:0,scd:0,usedMeet:0,inputAt:Date.now()};
   if(!isImp)HS.total+=tl.length;
  });
  ids.forEach(function(k){sendTo(k,{t:'role',role:HS.p[k].role,tasks:HS.p[k].tasks,total:HS.total,P:P,cooldown:HS.cfg.cooldown,vision:HS.cfg.vision,wireRoute:HS.wireRoute,powerTarget:HS.p[k].powerTarget,downloadStart:HS.p[k].downloadStart})});
@@ -777,12 +781,18 @@ function tick(){
   bcast({t:'sabotageClear'});
  }
  Object.keys(HS.p).forEach(function(k){var p=HS.p[k];var l=Math.hypot(p.ix,p.iy);if(l>1){p.ix/=l;p.iy/=l}
-  var ghost=p.role==='crew'&&!p.alive;move(p,p.ix*SPD*HS.cfg.speed*(ghost?1.25:1)*.05,p.iy*SPD*HS.cfg.speed*(ghost?1.25:1)*.05)});
+  if(!p.inputAt||Date.now()-p.inputAt>220){p.ix=0;p.iy=0}var ghost=p.role==='crew'&&!p.alive;move(p,p.ix*SPD*HS.cfg.speed*(ghost?1.25:1)*.05,p.iy*SPD*HS.cfg.speed*(ghost?1.25:1)*.05)});
  bcast({t:'st',p:Object.keys(HS.p).map(function(k){var p=HS.p[k];return[k,p.x|0,p.y|0,p.alive?1:0,p.role==='imp'&&HS.bodies.length&&0?1:0]}),b:HS.bodies,dn:HS.done});
 }
 function move(p,dx,dy){
- p.x=Math.max(R,Math.min(W-R,p.x+dx));if(hit(p))p.x=Math.max(R,Math.min(W-R,p.x-dx));
- p.y=Math.max(R,Math.min(H-R,p.y+dy));if(hit(p))p.y=Math.max(R,Math.min(H-R,p.y-dy));
+ // Sweep short increments so corners and narrow doorways cannot swallow a full frame's movement.
+ var distance=Math.hypot(dx,dy),steps=Math.max(1,Math.ceil(distance/3)),sx=dx/steps,sy=dy/steps;
+ for(var i=0;i<steps;i++){
+  if(sx){var oldX=p.x;p.x=Math.max(R,Math.min(W-R,p.x+sx));if(hit(p))p.x=oldX}
+  if(sy){var oldY=p.y;p.y=Math.max(R,Math.min(H-R,p.y+sy));if(hit(p))p.y=oldY}
+ }
+ // Recover from a door closing or a stale collision leaving the player embedded.
+ if(hit(p)){var ox=p.x,oy=p.y,recovered=false;for(var radius=4;radius<=48&&!recovered;radius+=4){for(var a=0;a<Math.PI*2;a+=Math.PI/8){p.x=ox+Math.cos(a)*radius;p.y=oy+Math.sin(a)*radius;if(!hit(p)){recovered=true;break}}}if(!recovered){p.x=ox;p.y=oy}}
 }
 function pointInPoly(x,y,poly){
  var inside=false;
@@ -826,6 +836,7 @@ function hit(p){
  return pts.some(function(v){return !isWalkable(p.x+v[0],p.y+v[1])});
 }
 function startMeet(by,why){
+ Object.keys(HS.p).forEach(function(k){HS.p[k].ix=0;HS.p[k].iy=0});
  HS.phase='meet';HS.votes={};HS.by=by;
  bcast({t:'meet',by:by,why:why,al:Object.keys(HS.p).filter(function(k){return HS.p[k].alive}),T:25});
  clearTimeout(HS.mt);HS.mt=setTimeout(tally,25500);
@@ -880,16 +891,16 @@ function onMsg(m){
  else if(m.t==='cd'){killAt=m.until||Date.now()+12000}
  else if(m.t==='ventcd'){ventAt=m.until||Date.now()+6500}
  else if(m.t==='sabcd'){sabAt=m.until||Date.now()+28000}
- else if(m.t==='sabotage'){C.sabotage=m;C.sabotageUntil=m.until||Date.now()+35000;C.repairs={};C.repairProgress={};showFx(m.type==='lights'?'LIGHTS OUT':m.type==='reactor'?'REACTOR MELTDOWN':m.type==='o2'?'OXYGEN CRITICAL':m.type==='comms'?'COMMS JAMMED':'DOORS SEALED','#ff647f')}
+ else if(m.t==='sabotage'){C.sabotage=m;C.sabotageUntil=m.until||Date.now()+35000;C.repairs={};C.repairProgress={};if(m.type==='comms'&&activeTask!==-1)closeTask();taskUI();showFx(m.type==='lights'?'LIGHTS OUT':m.type==='reactor'?'REACTOR MELTDOWN':m.type==='o2'?'OXYGEN CRITICAL':m.type==='comms'?'COMMS JAMMED':'DOORS SEALED','#ff647f')}
  else if(m.t==='repairProgress'){C.repairProgress=C.repairProgress||{};C.repairProgress[m.type]=C.repairProgress[m.type]||{};C.repairProgress[m.type][m.panel]=1;showFx('REPAIR LINKED','#8ff8e8')}
- else if(m.t==='sabotageClear'){C.sabotage=null;C.sabotageUntil=0;C.repairProgress={};showFx('SYSTEM RESTORED','#86efac')}
- else if(m.t==='repaired'){C.sabotage=null;C.sabotageUntil=0;C.repairProgress={};showFx('SYSTEM RESTORED','#86efac')}
+ else if(m.t==='sabotageClear'){C.sabotage=null;C.sabotageUntil=0;C.repairProgress={};taskUI();showFx('SYSTEM RESTORED','#86efac')}
+ else if(m.t==='repaired'){C.sabotage=null;C.sabotageUntil=0;C.repairProgress={};taskUI();showFx('SYSTEM RESTORED','#86efac')}
  else if(m.t==='killfx'){killFx={x:m.x,y:m.y,col:m.col,at:Date.now()};showFx('ELIMINATED','#fb7185')}
  else if(m.t==='ventfx'){showFx('VENT','#c4b5fd')}
  else if(m.t==='meet'){C.phase='meet';meetUI(m)}
  else if(m.t==='voted'){var e=$('v_'+m.id);if(e)e.style.opacity=.4}
  else if(m.t==='res'){clearInterval(C.vi);$('vt').textContent=m.out?(P[m.out].name+(m.imp?' was a SABOTEUR':' was NOT a saboteur')):'Nobody was ejected';$('vopts').innerHTML='';$('vtime').textContent=''}
- else if(m.t==='resume'){C.phase='play';show(null);killAt=Date.now()+12000;C.alive=C.pos[me]?C.pos[me].al:true}
+ else if(m.t==='resume'){C.phase='play';inp={x:0,y:0};jv={x:0,y:0};show(null);killAt=Date.now()+12000;C.alive=C.pos[me]?C.pos[me].al:true}
  else if(m.t==='end'){C.phase='end';$('hud').style.display=$('btns').style.display='none';show('end');
   var win=(m.w==='crew')===(m.r[me]==='crew');$('et').textContent=win?'VICTORY':'DEFEAT';$('et').style.color=win?'#4ade80':'#fb7185';
   $('es').textContent=(m.w==='crew'?'The crew won.':'The saboteurs won.')+' Saboteur: '+Object.keys(m.r).filter(function(k){return m.r[k]==='imp'}).map(function(k){return P[k].name}).join(', ');
@@ -902,9 +913,11 @@ function openSabRepair(type,panel){
  $('sabRepairPanel').hidden=false;$('repairContent').innerHTML='';
  var title=$('repairTitle'),desc=$('repairDesc'),area=$('repairContent');
  if(type==='lights'){
-  title.textContent='ELECTRICAL · POWER';desc.textContent='Reset every breaker to restore lighting.';
-  var row=document.createElement('div');row.className='repair-switches';var states=[0,0,0,0,0];
-  states.forEach(function(_,i){var b=document.createElement('button');b.textContent='OFF';b.onclick=function(){states[i]=1-states[i];b.classList.toggle('on',!!states[i]);b.textContent=states[i]?'ON':'OFF';if(states.every(Boolean))finishSabRepair(type,panel)};row.appendChild(b)});area.appendChild(row);
+  title.textContent='ELECTRICAL · POWER';desc.textContent='Match the five breaker states shown below to restore the grid.';
+  var target=(C.sabotage&&C.sabotage.switches)||[1,0,1,0,1],states=[0,0,0,0,0],goal=document.createElement('div'),row=document.createElement('div'),status=document.createElement('div');
+  goal.className='repair-target';goal.textContent='REQUIRED PATTERN · '+target.map(function(v){return v?'ON':'OFF'}).join(' / ');row.className='repair-switches';status.className='repair-display';status.textContent='0 / 5 BREAKERS MATCHED';
+  function check(){var matched=states.filter(function(v,i){return v===target[i]}).length;status.textContent=matched+' / 5 BREAKERS MATCHED';if(matched===5)finishSabRepair(type,panel,{switches:states.slice()})}
+  states.forEach(function(_,i){var b=document.createElement('button');b.textContent='OFF';b.onclick=function(){states[i]=1-states[i];b.classList.toggle('on',!!states[i]);b.textContent=states[i]?'ON':'OFF';check()};row.appendChild(b)});area.append(goal,row,status);
  }else if(type==='reactor'){
   title.textContent='REACTOR · HAND SCANNER';desc.textContent='Keep your hand on the scanner until the stabilisation cycle completes.';
   var b=document.createElement('button');b.className='repair-hold';b.textContent='HOLD TO STABILISE';var progress=document.createElement('div');progress.className='scan-bar';progress.innerHTML='<i></i>';var amount=0,holding=false;
@@ -923,11 +936,11 @@ function openSabRepair(type,panel){
   var verify=document.createElement('button');verify.className='repair-lock';verify.textContent='VERIFY CODE';verify.onclick=function(){if(entry===code)finishSabRepair(type,panel,{code:entry});else{entry='';display.textContent='_____';desc.textContent='INCORRECT CODE · READ THE NOTE AND TRY AGAIN'}};
   area.append(sticker,display,pad,verify);
  }else if(type==='comms'){
-  title.textContent='COMMUNICATIONS · SIGNAL';desc.textContent='Tune the signal frequency until the waveform locks into place.';
-  var target=(C.sabotage&&C.sabotage.target)||50,range=document.createElement('input');range.type='range';range.min='0';range.max='100';range.value='5';range.className='repair-frequency';
-  var read=document.createElement('div');read.className='repair-display';read.textContent='FREQUENCY · 005';range.oninput=function(){read.textContent='FREQUENCY · '+String(range.value).padStart(3,'0')};
-  var lock=document.createElement('button');lock.className='repair-lock';lock.textContent='LOCK SIGNAL';lock.onclick=function(){if(Math.abs(Number(range.value)-target)<=6)finishSabRepair(type,panel,{frequency:Number(range.value)});else desc.textContent='SIGNAL NOT LOCKED · ADJUST THE FREQUENCY'};
-  area.append(read,range,lock);
+  title.textContent='COMMUNICATIONS · SIGNAL';desc.textContent='Tune all three signal bands. Each waveform must lock within tolerance.';
+  var targets=(C.sabotage&&C.sabotage.frequencies)||[35,50,65],values=[5,50,95],rows=document.createElement('div'),read=document.createElement('div');rows.className='repair-frequency-stack';read.className='repair-display';
+  function refresh(){read.textContent=values.map(function(v,i){return 'BAND '+(i+1)+' · '+String(v).padStart(3,'0')}).join('     ')}
+  targets.forEach(function(target,i){var label=document.createElement('label'),range=document.createElement('input');label.textContent='SIGNAL BAND '+(i+1);range.type='range';range.min='0';range.max='100';range.value=String(values[i]);range.className='repair-frequency';range.oninput=function(){values[i]=Number(range.value);refresh()};label.appendChild(range);rows.appendChild(label)});
+  var lock=document.createElement('button');lock.className='repair-lock';lock.textContent='LOCK ALL THREE BANDS';lock.onclick=function(){if(values.every(function(v,i){return Math.abs(v-targets[i])<=4}))finishSabRepair(type,panel,{frequencies:values.slice()});else desc.textContent='SIGNAL NOT LOCKED · ALIGN EVERY BAND'};refresh();area.append(read,rows,lock);
  }
 }
 function trySabRepair(p){
@@ -947,7 +960,7 @@ function lobbyUI(){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 $('plist').addEventListener('click',function(e){var b=e.target.closest('[data-kick]');if(b&&isHost&&confirm('Kick this player from the lobby?'))toHost({t:'kick',id:b.getAttribute('data-kick')})});
-function taskUI(){$('tl').innerHTML=C.role==='imp'?'Eliminate the crew. Do not get caught.':C.tasks.map(function(i){var stage=C.stages&&C.stages[i]||0,total=taskStageCount(i),tail=total>1?' ('+(stage+1)+'/'+total+')':'';var label=i===10?(stage?'UPLOAD DATA':'DOWNLOAD DATA'):TASK_NAMES[i];return(C.mine[i]?'&#10003; ':'&#9675; ')+label+tail}).join('<br>')}
+function taskUI(){if(C.role==='imp'){$('tl').textContent='Eliminate the crew. Do not get caught.';return}if(C.sabotage&&C.sabotage.type==='comms'&&C.sabotage.until>Date.now()){$('tl').textContent='SIGNAL LOST · TASKS OFFLINE';return}$('tl').innerHTML=C.tasks.map(function(i){var stage=C.stages&&C.stages[i]||0,total=taskStageCount(i),tail=total>1?' ('+(stage+1)+'/'+total+')':'';var label=i===10?(stage?'UPLOAD DATA':'DOWNLOAD DATA'):TASK_NAMES[i];return(C.mine[i]?'&#10003; ':'&#9675; ')+label+tail}).join('<br>')}
 function meetUI(m){
  show('vote');$('vt').textContent=(m.why==='body'?'Body reported by ':'Emergency meeting by ')+P[m.by].name;
  var amAlive=m.al.indexOf(me)>-1,o='';
@@ -972,7 +985,7 @@ document.addEventListener('pointermove',function(e){if(!joy||e.pointerId!==joy.i
 function jend(e){if(joy&&e.pointerId===joy.id){joy=null;jv={x:0,y:0}}}
 document.addEventListener('pointerup',jend);document.addEventListener('pointercancel',jend);
 var holdT=0,holdId=-1;
-function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew')return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i],loc=taskLocation(s,C.stages&&C.stages[s]||0);if(!C.mine[s]&&loc&&Math.hypot(p.x-loc[0],p.y-loc[1])<80)return s}return-1}
+function nearTask(){var p=C.pos[me];if(!p||C.role!=='crew'||(C.sabotage&&C.sabotage.type==='comms'&&C.sabotage.until>Date.now()))return-1;for(var i=0;i<C.tasks.length;i++){var s=C.tasks[i],loc=taskLocation(s,C.stages&&C.stages[s]||0);if(!C.mine[s]&&loc&&Math.hypot(p.x-loc[0],p.y-loc[1])<80)return s}return-1}
 $('use').addEventListener('pointerdown',function(e){e.preventDefault();var p=C.pos[me];if(!p||(!p.al&&C.role!=='crew'))return;if(trySabRepair(p))return;var t=nearTask();if(t>-1)startTask(t);else if(Math.hypot(p.x-TBL[0],p.y-TBL[1])<110)toHost({t:'meet'})});
 function endHold(){holdId=-1;$('hold').style.display='none'}
 $('taskcancel').onclick=function(){closeTask()};
