@@ -287,6 +287,12 @@ canvas{image-rendering:auto}
 #sab:disabled{filter:grayscale(.8);opacity:.4}
 @media(max-height:720px){.sab-shell{max-height:calc(100dvh - 14px);padding:13px;gap:9px}.sab-deck{height:90px}.sab-option{min-height:62px!important;padding:7px 10px!important}.sab-icon{width:34px;height:34px}.sab-copy small{font-size:9px}}
 @media(max-width:430px){#sabpanel{padding:8px}.sab-shell{max-height:calc(100dvh - 16px);border-radius:19px}.sab-top p{font-size:11px}.sab-option{grid-template-columns:36px minmax(0,1fr) 14px!important;gap:9px!important}.sab-icon{width:34px;height:34px}.sab-copy b{font-size:11px}.sab-copy small{font-size:9px}}
+
+/* Clear, touch-friendly layouts for the upgraded sabotage puzzles. */
+.repair-target{width:100%;padding:12px 10px;border:1px solid #e8bd6270;border-radius:10px;background:#302719;color:#ffe3a3;font-size:12px;font-weight:900;letter-spacing:1px;line-height:1.6}
+.repair-frequency-stack{display:grid;gap:13px;width:min(420px,100%);text-align:left}
+.repair-frequency-stack label{display:grid;gap:7px;color:#c8d8ed;font-size:11px;font-weight:900;letter-spacing:1px}
+.repair-frequency-stack .repair-frequency{width:100%;min-height:32px;touch-action:pan-x;accent-color:#70e9e0}
 </style></head><body>
 <canvas id="cv"></canvas>
 <div id="hud"><div>Role: <span id="role"></span><div id="tl" style="font-weight:400;font-size:14px;margin-top:4px"></div></div><div>Tasks<div id="bar"><i></i></div></div></div>
